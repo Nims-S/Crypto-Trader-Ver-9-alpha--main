@@ -7,6 +7,7 @@ from typing import Any
 
 STATE_PATH = Path("state") / "ver9_runtime_state.json"
 RECOVERY_THRESHOLD = 2
+ACTIVE_RECOVERY_THRESHOLD = 2
 FAILURE_THRESHOLD = 1
 
 
@@ -107,24 +108,41 @@ def _remove_quarantine_record(state: dict[str, Any], strategy_id: str) -> None:
 def record_strategy_event(strategy_id: str, *, approved: bool, reason: str) -> dict[str, Any]:
     state = load_state()
     entry = _health_entry(state, strategy_id)
+    current_status = str(entry.get("status") or "active")
 
     if approved:
         entry["approved_streak"] = int(entry.get("approved_streak") or 0) + 1
         entry["failure_streak"] = 0
 
-        if str(entry.get("status") or "active") == "quarantined":
+        if current_status == "quarantined":
             entry["recovery_streak"] = int(entry.get("recovery_streak") or 0) + 1
             if entry["recovery_streak"] >= RECOVERY_THRESHOLD:
                 entry["status"] = "probationary"
                 entry["quarantine_reason"] = ""
                 entry["recovery_streak"] = 0
                 state.setdefault("recovery_events", []).append(
-                    {"strategy_id": strategy_id, "reason": "recovered_from_quarantine", "timestamp": _now()}
+                    {
+                        "strategy_id": strategy_id,
+                        "reason": "recovered_from_quarantine",
+                        "timestamp": _now(),
+                    }
                 )
                 _remove_quarantine_record(state, strategy_id)
+        elif current_status == "probationary":
+            entry["recovery_streak"] = int(entry.get("recovery_streak") or 0) + 1
+            if entry["recovery_streak"] >= ACTIVE_RECOVERY_THRESHOLD:
+                entry["status"] = "active"
+                entry["recovery_streak"] = 0
+                state.setdefault("recovery_events", []).append(
+                    {
+                        "strategy_id": strategy_id,
+                        "reason": "promoted_to_active",
+                        "timestamp": _now(),
+                    }
+                )
         else:
             entry["recovery_streak"] = 0
-            if str(entry.get("status") or "active") not in {"validated", "probationary", "deployable", "live"}:
+            if current_status not in {"validated", "deployable", "live", "active"}:
                 entry["status"] = "active"
     else:
         entry["approved_streak"] = 0
