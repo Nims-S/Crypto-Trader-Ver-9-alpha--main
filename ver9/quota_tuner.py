@@ -53,6 +53,8 @@ REGIME_SYMBOL_BIAS = {
     },
 }
 
+REGIME_FAMILY_PRIORITY = ("mean_reversion", "volatility_compression", "trend")
+
 
 @dataclass(slots=True)
 class RegimeQuotaReport:
@@ -97,6 +99,20 @@ def _dominant_key(counter: Counter[str]) -> str:
 
 
 
+def _priority_family(family_counter: Counter[str]) -> str:
+    if not family_counter:
+        return "unknown"
+
+    ranked = sorted(family_counter.items(), key=lambda item: (item[1], item[0]), reverse=True)
+    for family in REGIME_FAMILY_PRIORITY:
+        if family_counter.get(family, 0) > 0:
+            best_count = ranked[0][1]
+            if family_counter[family] == best_count or family_counter[family] >= max(1, best_count - 1):
+                return family
+    return ranked[0][0]
+
+
+
 def infer_regime(candidates: list[dict[str, Any]] | None = None, *, fallback: str = "adaptive") -> str:
     if not candidates:
         return fallback
@@ -115,8 +131,12 @@ def infer_regime(candidates: list[dict[str, Any]] | None = None, *, fallback: st
         family_counter[family] += 1
         symbol_counter[symbol] += 1
 
+    family_pressure = _priority_family(family_counter)
+    if family_pressure in REGIME_FAMILY_BIAS:
+        return family_pressure
+
     dominant_regime = _dominant_key(regime_counter)
-    if dominant_regime in REGIME_FAMILY_BIAS:
+    if dominant_regime in REGIME_FAMILY_BIAS and dominant_regime != "adaptive":
         return dominant_regime
 
     if family_counter.get("mean_reversion", 0) >= family_counter.get("trend", 0) + 1:
