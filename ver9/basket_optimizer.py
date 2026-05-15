@@ -41,12 +41,15 @@ class BasketSelection:
     basket_score: float = 0.0
     diversity_score: float = 0.0
     correlation_penalty: float = 0.0
+    basket_size: int = 0
     probationary: bool = False
     max_positions: int = 3
     min_positions: int = 2
 
     def as_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        payload = asdict(self)
+        payload["basket_size"] = len(self.selected)
+        return payload
 
     def as_allocations(self) -> list[dict[str, Any]]:
         allocations: list[dict[str, Any]] = []
@@ -252,7 +255,7 @@ class BasketOptimizer:
                     break
                 consider(row, relaxed=True)
 
-        if not selected:
+        if len(selected) < self.min_positions:
             return BasketSelection(
                 selected=[],
                 rejected=rejected,
@@ -260,6 +263,7 @@ class BasketOptimizer:
                 basket_score=0.0,
                 diversity_score=0.0,
                 correlation_penalty=0.0,
+                basket_size=0,
                 probationary=True,
                 max_positions=self.max_positions,
                 min_positions=self.min_positions,
@@ -279,9 +283,9 @@ class BasketOptimizer:
                 for row, score in zip(selected, basket_scores, strict=False)
             }
 
-        unique_symbol_count = len({ _symbol_root(str(row.get("symbol") or "")) for row in selected })
-        unique_family_count = len({ str(row.get("family") or "unknown").lower() for row in selected })
-        unique_regime_count = len({ str(row.get("regime") or "adaptive").lower() for row in selected })
+        unique_symbol_count = len({_symbol_root(str(row.get("symbol") or "")) for row in selected})
+        unique_family_count = len({str(row.get("family") or "unknown").lower() for row in selected})
+        unique_regime_count = len({str(row.get("regime") or "adaptive").lower() for row in selected})
         diversity_score = round((unique_symbol_count + unique_family_count + unique_regime_count) / 3.0, 6)
         correlation_penalty = round(sum(row.get("pair_penalty", 0.0) for row in selected), 6)
         basket_score = round(mean(basket_scores) if basket_scores else 0.0, 6)
@@ -294,6 +298,7 @@ class BasketOptimizer:
             basket_score=basket_score,
             diversity_score=diversity_score,
             correlation_penalty=correlation_penalty,
+            basket_size=len(selected),
             probationary=probationary,
             max_positions=self.max_positions,
             min_positions=self.min_positions,
