@@ -9,6 +9,11 @@ from typing import Any
 
 REGISTRY_PATH = Path("registry") / "ver9_registry.json"
 REGISTRY_LOCK = threading.RLock()
+REGIME_BY_FAMILY = {
+    "mean_reversion": "mean_reversion",
+    "volatility_compression": "volatility_compression",
+    "trend": "trend",
+}
 
 
 def _now() -> str:
@@ -65,6 +70,33 @@ def _ensure_defaults(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 
+def _migrate_legacy_entries(state: dict[str, Any]) -> bool:
+    entries = state.get("entries")
+    if not isinstance(entries, dict):
+        return False
+
+    changed = False
+    for strategy_id, record in list(entries.items()):
+        if not isinstance(record, dict):
+            continue
+        family = str(record.get("family") or "").lower()
+        regime = str(record.get("regime") or "").lower()
+        if regime == "adaptive" and family in REGIME_BY_FAMILY:
+            record["regime"] = REGIME_BY_FAMILY[family]
+            record["updated_at"] = _now()
+            entries[strategy_id] = record
+            changed = True
+        if not record.get("status") and record.get("validation_passed"):
+            record["status"] = "validated"
+            record["updated_at"] = _now()
+            entries[strategy_id] = record
+            changed = True
+    if changed:
+        state["entries"] = entries
+    return changed
+
+
+
 def load_registry() -> dict[str, Any]:
     with REGISTRY_LOCK:
         if not REGISTRY_PATH.exists():
@@ -78,6 +110,7 @@ def load_registry() -> dict[str, Any]:
             if recovered is not None:
                 _backup_corrupt_registry(raw_text, f"json_decode_error:{exc}")
                 state = _ensure_defaults(recovered)
+                _migrate_legacy_entries(state)
                 save_registry(state)
                 return state
 
@@ -93,7 +126,8 @@ def load_registry() -> dict[str, Any]:
             return state
 
         payload = _ensure_defaults(payload)
-        if payload.get("_recovered_trailing_data"):
+        migrated = _migrate_legacy_entries(payload)
+        if payload.get("_recovered_trailing_data") or migrated:
             save_registry(payload)
         return payload
 
@@ -129,6 +163,10 @@ def upsert_candidate(record: dict[str, Any]) -> dict[str, Any]:
         entries = state.setdefault("entries", {})
         current = entries.get(record["strategy_id"], {}) if isinstance(entries, dict) else {}
         merged = {**current, **record, "updated_at": _now()}
+        if str(merged.get("regime") or "").lower() == "adaptive":
+            family = str(merged.get("family") or "").lower()
+            if family in REGIME_BY_FAMILY:
+                merged["regime"] = REGIME_BY_FAMILY[family]
         entries[record["strategy_id"]] = merged
         state["entries"] = entries
         save_registry(state)
