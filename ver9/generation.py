@@ -26,8 +26,12 @@ DEFAULT_SYMBOLS = [
     "SOL/USDT",
 ]
 
-
 DEFAULT_REGIME = "adaptive"
+FAMILY_REGIME_MAP = {
+    "mean_reversion": "mean_reversion",
+    "volatility_compression": "volatility_compression",
+    "trend": "trend",
+}
 
 
 
@@ -39,6 +43,11 @@ def _stable_float(seed: str, minimum: float, maximum: float) -> float:
 
 
 
+def _family_regime(family: str, fallback: str = DEFAULT_REGIME) -> str:
+    return FAMILY_REGIME_MAP.get(str(family or "").lower(), fallback)
+
+
+
 def build_candidate(*, family: str, symbol: str, iteration: int, regime: str = DEFAULT_REGIME) -> dict[str, Any]:
     params = get_mutation_space(family)
 
@@ -47,7 +56,9 @@ def build_candidate(*, family: str, symbol: str, iteration: int, regime: str = D
         for values in params.values()
     ) if params else 0.0
 
-    base_seed = f"{family}:{symbol}:{iteration}:{regime}"
+    effective_regime = regime if regime != DEFAULT_REGIME else _family_regime(family, fallback=regime)
+
+    base_seed = f"{family}:{symbol}:{iteration}:{effective_regime}"
 
     profit_factor = round(_stable_float(base_seed + ':pf', 1.1, 3.4), 2)
     return_pct = round(_stable_float(base_seed + ':ret', 2.0, 28.0), 2)
@@ -55,11 +66,11 @@ def build_candidate(*, family: str, symbol: str, iteration: int, regime: str = D
     robustness_score = round(_stable_float(base_seed + ':rob', 0.45, 0.96), 3)
 
     return {
-        "strategy_id": f"{family}_{symbol.replace('/', '_').lower()}_{regime}_{iteration}",
+        "strategy_id": f"{family}_{symbol.replace('/', '_').lower()}_{effective_regime}_{iteration}",
         "family": family,
         "symbol": symbol,
         "timeframe": "1h",
-        "regime": regime,
+        "regime": effective_regime,
         "profit_factor": profit_factor,
         "return_pct": return_pct,
         "max_drawdown_pct": max_drawdown_pct,
