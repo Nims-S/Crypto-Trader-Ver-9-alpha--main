@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import asdict, dataclass, field
 from statistics import mean
 from typing import Any
@@ -20,12 +21,18 @@ REGIME_MULTIPLIERS = {
     "adaptive": 1.0,
 }
 
+DEFAULT_MAX_STRATEGY_WEIGHT = 0.45
+DEFAULT_MAX_SYMBOL_WEIGHT = 0.55
+DEFAULT_MAX_FAMILY_WEIGHT = 0.65
+DEFAULT_CORRELATION_PENALTY_SCALE = 0.25
+
 
 def _to_float(value: Any, default: float = 0.0) -> float:
     try:
         return float(value)
     except (TypeError, ValueError):
         return default
+
 
 
 def _symbol_root(symbol: str) -> str:
@@ -45,6 +52,7 @@ class BasketSelection:
     probationary: bool = False
     max_positions: int = 3
     min_positions: int = 2
+    allocation_telemetry: dict[str, Any] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -83,6 +91,10 @@ class BasketOptimizer:
         enforce_unique_symbols: bool = True,
         enforce_unique_families: bool = False,
         min_candidate_score: float = 0.2,
+        max_strategy_weight: float = DEFAULT_MAX_STRATEGY_WEIGHT,
+        max_symbol_weight: float = DEFAULT_MAX_SYMBOL_WEIGHT,
+        max_family_weight: float = DEFAULT_MAX_FAMILY_WEIGHT,
+        correlation_penalty_scale: float = DEFAULT_CORRELATION_PENALTY_SCALE,
     ) -> None:
         self.max_positions = max(1, int(max_positions))
         self.min_positions = max(1, int(min_positions))
@@ -90,6 +102,10 @@ class BasketOptimizer:
         self.enforce_unique_symbols = bool(enforce_unique_symbols)
         self.enforce_unique_families = bool(enforce_unique_families)
         self.min_candidate_score = float(min_candidate_score)
+        self.max_strategy_weight = max(0.0, min(1.0, float(max_strategy_weight)))
+        self.max_symbol_weight = max(0.0, min(1.0, float(max_symbol_weight)))
+        self.max_family_weight = max(0.0, min(1.0, float(max_family_weight)))
+        self.correlation_penalty_scale = max(0.0, float(correlation_penalty_scale))
 
     def candidate_score(self, candidate: dict[str, Any]) -> float:
         pf = max(_to_float(candidate.get("profit_factor"), 0.0), 0.0)
@@ -191,6 +207,80 @@ class BasketOptimizer:
             return False
         return True
 
+    def _allocation_caps(self, selected: list[dict[str, Any]]) -> dict[str, float]:
+        symbol_counts = Counter(_symbol_root(str(row.get("symbol") or "")) for row in selected)
+        family_counts = Counter(str(row.get("family") or "unknown").lower() for row in selected)
+        caps: dict[str, float] = {}
+        for row in selected:
+            strategy_id = str(row.get("strategy_id") or row.get("candidate_id") or "unknown")
+            symbol = _symbol_root(str(row.get("symbol") or ""))
+            family = str(row.get("family") or "unknown").lower()
+            symbol_cap = self.max_symbol_weight / max(1, symbol_counts.get(symbol, 1))
+            family_cap = self.max_family_weight / max(1, family_counts.get(family, 1))
+            caps[strategy_id] = min(self.max_strategy_weight, symbol_cap, family_cap)
+        return caps
+
+    def _build_weights(self, selected: list[dict[str, Any]]) -> tuple[dict[str, float], dict[str, Any]]:
+        if not selected:
+            return {}, {"cash_weight": 1.0, "allocation_caps": {}}
+
+        raw_scores: dict[str, float] = {}
+        for row in selected:
+            strategy_id = str(row.get("strategy_id") or row.get("candidate_id") or "unknown")
+            base_score = max(_to_float(row.get("basket_score"), 0.0), 0.0)
+            correlation = max(_to_float(row.get("pair_penalty"), 0.0), 0.0)
+            correlation += abs(_to_float(row.get("correlation_hint"), 0.0))
+            adjusted = base_score / (1.0 + (self.correlation_penalty_scale * correlation))
+            raw_scores[strategy_id] = adjusted
+
+        total_score = sum(raw_scores.values())
+        if total_score <= 0:
+            normalized = {strategy_id: 1.0 / len(raw_scores) for strategy_id in raw_scores}
+        else:
+            normalized = {strategy_id: score / total_score for strategy_id, score in raw_scores.items()}
+
+        caps = self._allocation_caps(selected)
+        weights = dict(normalized)
+        cash_weight = 0.0
+
+        for _ in range(8):
+            excess = 0.0
+            room_total = 0.0
+            room_map: dict[str, float] = {}
+
+            for strategy_id, current_weight in list(weights.items()):
+                cap = caps.get(strategy_id, self.max_strategy_weight)
+                clipped = min(current_weight, cap)
+                excess += current_weight - clipped
+                room = max(0.0, cap - clipped)
+                room_map[strategy_id] = room
+                room_total += room
+                weights[strategy_id] = clipped
+
+            if excess <= 1e-9:
+                break
+
+            if room_total <= 1e-9:
+                cash_weight += excess
+                break
+
+            for strategy_id, room in room_map.items():
+                if room <= 0:
+                    continue
+                add = excess * (room / room_total)
+                weights[strategy_id] = min(caps.get(strategy_id, self.max_strategy_weight), weights[strategy_id] + add)
+
+        used = sum(weights.values())
+        cash_weight = max(0.0, 1.0 - used)
+        telemetry = {
+            "allocation_caps": caps,
+            "cash_weight": round(cash_weight, 6),
+            "raw_weight_sum": round(sum(normalized.values()), 6),
+            "used_weight_sum": round(used, 6),
+            "correlation_adjusted": True,
+        }
+        return weights, telemetry
+
     def build(self, candidates: list[dict[str, Any]]) -> BasketSelection:
         eligible = [dict(candidate) for candidate in candidates if isinstance(candidate, dict) and self._is_eligible(candidate)]
         ranked = sorted(eligible, key=self.candidate_score, reverse=True)
@@ -267,22 +357,11 @@ class BasketOptimizer:
                 probationary=True,
                 max_positions=self.max_positions,
                 min_positions=self.min_positions,
+                allocation_telemetry={"cash_weight": 1.0, "allocation_caps": {}},
             )
 
+        weights, telemetry = self._build_weights(selected)
         basket_scores = [max(_to_float(row.get("basket_score"), 0.0), 0.0) for row in selected]
-        total_score = sum(basket_scores)
-        if total_score <= 0:
-            weight = 1.0 / len(selected)
-            weights = {
-                str(row.get("strategy_id") or row.get("candidate_id") or "unknown"): weight
-                for row in selected
-            }
-        else:
-            weights = {
-                str(row.get("strategy_id") or row.get("candidate_id") or "unknown"): round(score / total_score, 6)
-                for row, score in zip(selected, basket_scores, strict=False)
-            }
-
         unique_symbol_count = len({_symbol_root(str(row.get("symbol") or "")) for row in selected})
         unique_family_count = len({str(row.get("family") or "unknown").lower() for row in selected})
         unique_regime_count = len({str(row.get("regime") or "adaptive").lower() for row in selected})
@@ -302,6 +381,7 @@ class BasketOptimizer:
             probationary=probationary,
             max_positions=self.max_positions,
             min_positions=self.min_positions,
+            allocation_telemetry=telemetry,
         )
 
     def allocate(self, candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
