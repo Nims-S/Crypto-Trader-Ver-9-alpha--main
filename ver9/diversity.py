@@ -33,6 +33,7 @@ class DiversityReport:
     symbol_counts: dict[str, int]
     family_counts: dict[str, int]
     regime_counts: dict[str, int]
+    status_counts: dict[str, int]
     diversity_score: float
     scope: str = "basket"
     status_filter: str | None = None
@@ -153,6 +154,7 @@ def diversity_report(
     symbols = Counter(_symbol_root(str(row.get("symbol") or "")) for row in rows)
     families = Counter(str(row.get("family") or "unknown").lower() for row in rows)
     regimes = Counter(str(row.get("regime") or "adaptive").lower() for row in rows)
+    statuses_counter = Counter(str(row.get("status") or "unknown").lower() for row in rows)
 
     total = len(rows)
     diversity = basket_diversity_score(rows)
@@ -164,6 +166,7 @@ def diversity_report(
         symbol_counts=dict(symbols),
         family_counts=dict(families),
         regime_counts=dict(regimes),
+        status_counts=dict(statuses_counter),
         diversity_score=diversity,
         scope=effective_scope,
         status_filter=effective_status,
