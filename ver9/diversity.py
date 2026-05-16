@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Any, Iterable
 
 DEFAULT_FAMILY_QUOTAS = {
     "mean_reversion": 5,
@@ -16,6 +16,13 @@ DEFAULT_SYMBOL_QUOTAS = {
     "SOL/USDT": 3,
 }
 
+BASKET_STATE_STATUSES = {
+    "validated",
+    "probationary",
+    "deployable",
+    "live",
+}
+
 
 @dataclass(slots=True)
 class DiversityReport:
@@ -27,14 +34,18 @@ class DiversityReport:
     family_counts: dict[str, int]
     regime_counts: dict[str, int]
     diversity_score: float
+    scope: str = "basket"
+    status_filter: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
+
 def _symbol_root(symbol: str) -> str:
     symbol = str(symbol or "").upper()
     return symbol.split("/")[0] if symbol else "UNKNOWN"
+
 
 
 def normalize_quota_map(
@@ -53,6 +64,43 @@ def normalize_quota_map(
             value = default
         normalized[item] = max(0, value)
     return normalized
+
+
+
+def filter_basket_state_candidates(candidates: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    filtered: list[dict[str, Any]] = []
+    for row in candidates:
+        if not isinstance(row, dict):
+            continue
+        status = str(row.get("status") or "").lower()
+        if status in BASKET_STATE_STATUSES:
+            filtered.append(row)
+    return filtered
+
+
+
+def filter_candidates_by_status(
+    candidates: Iterable[dict[str, Any]],
+    *,
+    status: str | None = None,
+    statuses: Iterable[str] | None = None,
+) -> list[dict[str, Any]]:
+    if statuses:
+        allowed = {str(item).lower() for item in statuses}
+    elif status:
+        allowed = {str(status).lower()}
+    else:
+        allowed = BASKET_STATE_STATUSES
+
+    filtered: list[dict[str, Any]] = []
+    for row in candidates:
+        if not isinstance(row, dict):
+            continue
+        row_status = str(row.get("status") or "").lower()
+        if row_status in allowed:
+            filtered.append(row)
+    return filtered
+
 
 
 def build_generation_quota_plan(
@@ -85,13 +133,29 @@ def build_generation_quota_plan(
     return plan
 
 
-def diversity_report(candidates: list[dict[str, Any]]) -> DiversityReport:
-    symbols = Counter(_symbol_root(str(row.get("symbol") or "")) for row in candidates if isinstance(row, dict))
-    families = Counter(str(row.get("family") or "unknown").lower() for row in candidates if isinstance(row, dict))
-    regimes = Counter(str(row.get("regime") or "adaptive").lower() for row in candidates if isinstance(row, dict))
 
-    total = len(candidates)
-    diversity = basket_diversity_score(candidates)
+def diversity_report(
+    candidates: list[dict[str, Any]],
+    *,
+    scope: str = "basket",
+    status: str | None = None,
+    statuses: Iterable[str] | None = None,
+) -> DiversityReport:
+    if scope == "basket":
+        rows = filter_candidates_by_status(candidates, status=status, statuses=statuses)
+        effective_status = status
+        effective_scope = "basket"
+    else:
+        rows = [row for row in candidates if isinstance(row, dict)]
+        effective_status = status
+        effective_scope = scope
+
+    symbols = Counter(_symbol_root(str(row.get("symbol") or "")) for row in rows)
+    families = Counter(str(row.get("family") or "unknown").lower() for row in rows)
+    regimes = Counter(str(row.get("regime") or "adaptive").lower() for row in rows)
+
+    total = len(rows)
+    diversity = basket_diversity_score(rows)
     return DiversityReport(
         total_candidates=total,
         unique_symbols=len(symbols),
@@ -101,7 +165,10 @@ def diversity_report(candidates: list[dict[str, Any]]) -> DiversityReport:
         family_counts=dict(families),
         regime_counts=dict(regimes),
         diversity_score=diversity,
+        scope=effective_scope,
+        status_filter=effective_status,
     )
+
 
 
 def basket_diversity_score(candidates: list[dict[str, Any]]) -> float:
@@ -116,6 +183,7 @@ def basket_diversity_score(candidates: list[dict[str, Any]]) -> float:
     return round(score, 4)
 
 
+
 def symbol_diversity_bonus(candidate: dict[str, Any], selected: list[dict[str, Any]]) -> float:
     candidate_symbol = _symbol_root(str(candidate.get("symbol") or ""))
     selected_symbols = {_symbol_root(str(row.get("symbol") or "")) for row in selected if isinstance(row, dict)}
@@ -124,16 +192,19 @@ def symbol_diversity_bonus(candidate: dict[str, Any], selected: list[dict[str, A
     return 0.4 if candidate_symbol not in selected_symbols else -0.15
 
 
+
 def family_overlap_penalty(candidate: dict[str, Any], selected: list[dict[str, Any]]) -> float:
     candidate_family = str(candidate.get("family") or "unknown").lower()
     overlap = sum(1 for row in selected if isinstance(row, dict) and str(row.get("family") or "unknown").lower() == candidate_family)
     return round(overlap * 0.35, 4)
 
 
+
 def regime_overlap_penalty(candidate: dict[str, Any], selected: list[dict[str, Any]]) -> float:
     candidate_regime = str(candidate.get("regime") or "adaptive").lower()
     overlap = sum(1 for row in selected if isinstance(row, dict) and str(row.get("regime") or "adaptive").lower() == candidate_regime)
     return round(overlap * 0.25, 4)
+
 
 
 def correlation_penalty(candidate: dict[str, Any], selected: list[dict[str, Any]]) -> float:
@@ -143,6 +214,7 @@ def correlation_penalty(candidate: dict[str, Any], selected: list[dict[str, Any]
             continue
         penalty += abs(float(row.get("correlation_hint") or 0.0)) * 0.15
     return round(penalty, 4)
+
 
 
 def combined_diversity_penalty(candidate: dict[str, Any], selected: list[dict[str, Any]]) -> float:
