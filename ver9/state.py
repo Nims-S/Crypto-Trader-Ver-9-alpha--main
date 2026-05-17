@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -14,8 +14,41 @@ DECAY_RECOVERY_PER_ACTIVE_CYCLE = 0.05
 RETIREMENT_THRESHOLD = 0.65
 
 
+
 def _now() -> str:
     return datetime.now(UTC).isoformat()
+
+
+
+def _parse_dt(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+
+def age_in_days(updated_at: str | None) -> float:
+    dt = _parse_dt(updated_at)
+    if not dt:
+        return 9999.0
+    return max(0.0, (datetime.now(UTC) - dt).total_seconds() / 86400.0)
+
+
+
+def freshness_multiplier(updated_at: str | None) -> float:
+    days_old = age_in_days(updated_at)
+    if days_old <= 3:
+        return 1.0
+    if days_old <= 7:
+        return 0.9
+    if days_old <= 14:
+        return 0.75
+    if days_old <= 30:
+        return 0.5
+    return 0.2
 
 
 
@@ -106,32 +139,12 @@ def _health_entry(state: dict[str, Any], strategy_id: str) -> dict[str, Any]:
 
 
 
-def _append_quarantine_record(state: dict[str, Any], strategy_id: str, reason: str) -> None:
-    records = state.setdefault("quarantined_strategies", [])
-    if not isinstance(records, list):
-        records = []
-        state["quarantined_strategies"] = records
-    if any(isinstance(item, dict) and item.get("strategy_id") == strategy_id for item in records):
-        return
-    records.append({"strategy_id": strategy_id, "reason": reason, "timestamp": _now()})
-
-
-
-def _remove_quarantine_record(state: dict[str, Any], strategy_id: str) -> None:
-    records = state.get("quarantined_strategies") or []
-    if not isinstance(records, list):
-        state["quarantined_strategies"] = []
-        return
-    state["quarantined_strategies"] = [item for item in records if not (isinstance(item, dict) and item.get("strategy_id") == strategy_id)]
-
-
-
-def _append_retirement_record(state: dict[str, Any], strategy_id: str, reason: str) -> None:
-    records = state.setdefault("retirement_events", [])
-    if not isinstance(records, list):
-        records = []
-        state["retirement_events"] = records
-    records.append({"strategy_id": strategy_id, "reason": reason, "timestamp": _now()})
+def _append_list(state: dict[str, Any], key: str, record: dict[str, Any]) -> None:
+    items = state.setdefault(key, [])
+    if not isinstance(items, list):
+        items = []
+        state[key] = items
+    items.append(record)
 
 
 
@@ -140,7 +153,6 @@ def _sync_registry_status(strategy_id: str, payload: dict[str, Any]) -> None:
         from .registry import upsert_candidate
     except Exception:
         return
-
     try:
         upsert_candidate({"strategy_id": strategy_id, **payload})
     except Exception:
@@ -154,13 +166,10 @@ def retire_strategy(strategy_id: str, reason: str = "inactive_decay") -> dict[st
     entry["retired"] = True
     entry["status"] = "retired"
     entry["retirement_reason"] = reason
-    entry["recovery_streak"] = 0
-    entry["inactive_cycles"] = int(entry.get("inactive_cycles") or 0)
     entry["decay_score"] = max(float(entry.get("decay_score") or 0.0), RETIREMENT_THRESHOLD)
     entry["last_updated"] = _now()
-    state["strategy_health"][strategy_id] = entry
-    _append_retirement_record(state, strategy_id, reason)
-    _sync_registry_status(strategy_id, {"status": "retired", "retired": True, "retirement_reason": reason, "decay_score": entry["decay_score"]})
+    _append_list(state, "retirement_events", {"strategy_id": strategy_id, "reason": reason, "timestamp": _now()})
+    _sync_registry_status(strategy_id, {"status": "retired", "retired": True, "retirement_reason": reason, "decay_score": round(float(entry["decay_score"]), 4)})
     save_state(state)
     return entry
 
@@ -194,19 +203,9 @@ def apply_rolling_decay(active_strategy_ids: set[str] | list[str] | None = None)
                 entry["retired"] = True
                 entry["status"] = "retired"
                 entry["retirement_reason"] = "inactive_decay"
-                _append_retirement_record(state, strategy_id, "inactive_decay")
-                _sync_registry_status(
-                    strategy_id,
-                    {
-                        "status": "retired",
-                        "retired": True,
-                        "retirement_reason": "inactive_decay",
-                        "decay_score": round(float(entry["decay_score"]), 4),
-                    },
-                )
+                _append_list(state, "retirement_events", {"strategy_id": strategy_id, "reason": "inactive_decay", "timestamp": _now()})
+                _sync_registry_status(strategy_id, {"status": "retired", "retired": True, "retirement_reason": "inactive_decay", "decay_score": round(float(entry["decay_score"]), 4)})
                 changed = True
-            elif entry.get("retired"):
-                _sync_registry_status(strategy_id, {"status": "retired", "retired": True, "retirement_reason": entry.get("retirement_reason", "inactive_decay"), "decay_score": round(float(entry["decay_score"]), 4)})
         entry["last_updated"] = _now()
         health[strategy_id] = entry
 
@@ -227,29 +226,21 @@ def record_strategy_event(strategy_id: str, *, approved: bool, reason: str) -> d
         entry["failure_streak"] = 0
         entry["retired"] = False
         entry["retirement_reason"] = ""
-
         if current_status == "quarantined":
             entry["recovery_streak"] = int(entry.get("recovery_streak") or 0) + 1
             if entry["recovery_streak"] >= RECOVERY_THRESHOLD:
                 entry["status"] = "probationary"
                 entry["quarantine_reason"] = ""
                 entry["recovery_streak"] = 0
-                state.setdefault("recovery_events", []).append(
-                    {"strategy_id": strategy_id, "reason": "recovered_from_quarantine", "timestamp": _now()}
-                )
-                _remove_quarantine_record(state, strategy_id)
+                _append_list(state, "recovery_events", {"strategy_id": strategy_id, "reason": "recovered_from_quarantine", "timestamp": _now()})
         elif current_status == "probationary":
             entry["recovery_streak"] = int(entry.get("recovery_streak") or 0) + 1
             if entry["recovery_streak"] >= ACTIVE_RECOVERY_THRESHOLD:
                 entry["status"] = "active"
                 entry["recovery_streak"] = 0
-                state.setdefault("recovery_events", []).append(
-                    {"strategy_id": strategy_id, "reason": "promoted_to_active", "timestamp": _now()}
-                )
+                _append_list(state, "recovery_events", {"strategy_id": strategy_id, "reason": "promoted_to_active", "timestamp": _now()})
         else:
             entry["recovery_streak"] = 0
-            if current_status not in {"validated", "deployable", "live", "active"}:
-                entry["status"] = "active"
     else:
         entry["approved_streak"] = 0
         entry["failure_streak"] = int(entry.get("failure_streak") or 0) + 1
@@ -257,21 +248,12 @@ def record_strategy_event(strategy_id: str, *, approved: bool, reason: str) -> d
         entry["quarantine_reason"] = reason
         entry["status"] = "quarantined"
         if entry["failure_streak"] >= FAILURE_THRESHOLD:
-            _append_quarantine_record(state, strategy_id, reason)
+            _append_list(state, "quarantined_strategies", {"strategy_id": strategy_id, "reason": reason, "timestamp": _now()})
 
     entry["events"] = list(entry.get("events") or []) + [{"approved": approved, "reason": reason, "timestamp": _now()}]
     entry["last_updated"] = _now()
     state["strategy_health"][strategy_id] = entry
-    _sync_registry_status(
-        strategy_id,
-        {
-            "status": entry.get("status"),
-            "retired": bool(entry.get("retired")),
-            "retirement_reason": entry.get("retirement_reason", ""),
-            "quarantine_reason": entry.get("quarantine_reason", ""),
-            "decay_score": round(float(entry.get("decay_score") or 0.0), 4),
-        },
-    )
+    _sync_registry_status(strategy_id, {"status": entry.get("status"), "retired": bool(entry.get("retired")), "retirement_reason": entry.get("retirement_reason", ""), "quarantine_reason": entry.get("quarantine_reason", ""), "decay_score": round(float(entry.get("decay_score") or 0.0), 4)})
     save_state(state)
     return entry
 
@@ -305,11 +287,7 @@ def append_cycle(cycle: dict[str, Any]) -> dict[str, Any]:
     state = load_state()
     state["cycles"].append(cycle)
     portfolio = cycle.get("portfolio") or []
-    active_strategy_ids = {
-        str(row.get("strategy_id") or "")
-        for row in portfolio
-        if isinstance(row, dict) and str(row.get("strategy_id") or "")
-    }
+    active_strategy_ids = {str(row.get("strategy_id") or "") for row in portfolio if isinstance(row, dict) and str(row.get("strategy_id") or "")}
     apply_rolling_decay(active_strategy_ids)
     save_state(state)
     return cycle
@@ -318,7 +296,7 @@ def append_cycle(cycle: dict[str, Any]) -> dict[str, Any]:
 
 def append_execution(execution: dict[str, Any]) -> dict[str, Any]:
     state = load_state()
-    state["executions"].append(execution)
+    _append_list(state, "executions", execution)
     save_state(state)
     return execution
 
@@ -326,7 +304,7 @@ def append_execution(execution: dict[str, Any]) -> dict[str, Any]:
 
 def append_risk_event(event: dict[str, Any]) -> dict[str, Any]:
     state = load_state()
-    state["risk_events"].append(event)
+    _append_list(state, "risk_events", event)
     save_state(state)
     return event
 
