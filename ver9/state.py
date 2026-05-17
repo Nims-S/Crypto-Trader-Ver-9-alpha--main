@@ -169,6 +169,23 @@ def _sync_registry_status(strategy_id: str, payload: dict[str, Any]) -> None:
 
 
 
+def is_quarantined(strategy_id: str) -> bool:
+    state = load_state()
+    entry = _health_entry(state, strategy_id)
+    return str(entry.get("status") or "") == "quarantined"
+
+
+
+def quarantine_strategy(strategy_id: str, reason: str = "manual") -> dict[str, Any]:
+    return record_strategy_event(strategy_id, approved=False, reason=reason)
+
+
+
+def recover_strategy(strategy_id: str, reason: str = "recovery") -> dict[str, Any]:
+    return record_strategy_event(strategy_id, approved=True, reason=reason)
+
+
+
 def retire_strategy(strategy_id: str, reason: str = "inactive_decay") -> dict[str, Any]:
     state = load_state()
     entry = _health_entry(state, strategy_id)
@@ -267,4 +284,3 @@ def record_strategy_event(strategy_id: str, *, approved: bool, reason: str) -> d
     _sync_registry_status(strategy_id, {"status": entry.get("status"), "retired": bool(entry.get("retired")), "retirement_reason": entry.get("retirement_reason", ""), "quarantine_reason": entry.get("quarantine_reason", ""), "decay_score": round(float(entry.get("decay_score") or 0.0), 4)})
     save_state(state)
     return entry
-
