@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 from ver9.artifacts import ArtifactManager, build_artifact
@@ -21,7 +22,6 @@ from ver9.universe import DEFAULT_UNIVERSE, PairUniverseManager
 from ver9.validation import validate_candidate
 
 
-
 def dump(payload: dict | list, output_file: str | None = None) -> None:
     text = json.dumps(payload, indent=2, sort_keys=True, default=str)
     if output_file:
@@ -31,12 +31,10 @@ def dump(payload: dict | list, output_file: str | None = None) -> None:
     print(text)
 
 
-
 def cmd_universe(args: argparse.Namespace) -> None:
     manager = PairUniverseManager()
     approved = manager.evaluate(DEFAULT_UNIVERSE)
     dump({"approved_universe": approved}, args.output_file)
-
 
 
 def cmd_protections(args: argparse.Namespace) -> None:
@@ -46,8 +44,7 @@ def cmd_protections(args: argparse.Namespace) -> None:
         rolling_loss_streak=args.loss_streak,
         volatility_regime_score=args.volatility,
     )
-    dump(decision.__dict__, args.output_file)
-
+    dump(asdict(decision), args.output_file)
 
 
 def _merge_validation(row: dict, validation: dict) -> dict:
@@ -102,12 +99,10 @@ def _merge_validation(row: dict, validation: dict) -> dict:
     return merged
 
 
-
 def _with_allocation_telemetry(summary: dict) -> dict:
     payload = dict(summary)
     payload["allocation_telemetry"] = summary.get("allocation_telemetry", {})
     return payload
-
 
 
 def cmd_evolve(args: argparse.Namespace) -> None:
@@ -191,10 +186,8 @@ def cmd_evolve(args: argparse.Namespace) -> None:
     )
 
 
-
 def _registry_candidates(args: argparse.Namespace) -> list[dict]:
     return list_candidates(status=args.status, family=args.family, symbol=args.symbol)
-
 
 
 def cmd_basket(args: argparse.Namespace) -> None:
@@ -208,13 +201,11 @@ def cmd_basket(args: argparse.Namespace) -> None:
     dump(_with_allocation_telemetry(summary), args.output_file)
 
 
-
 def cmd_portfolio_strict(args: argparse.Namespace) -> None:
     rows = _registry_candidates(args)
     portfolio = strict_portfolio(rows, max_positions=args.max_positions)
     basket = basket_summary(rows, max_positions=args.max_positions, min_positions=args.max_positions, soft_fill=False)
     dump({"portfolio": portfolio, "mode": "strict", "basket": basket, "allocation_telemetry": basket.get("allocation_telemetry", {})}, args.output_file)
-
 
 
 def cmd_portfolio_probationary(args: argparse.Namespace) -> None:
@@ -224,16 +215,13 @@ def cmd_portfolio_probationary(args: argparse.Namespace) -> None:
     dump({"portfolio": portfolio, "mode": "probationary", "basket": basket, "allocation_telemetry": basket.get("allocation_telemetry", {})}, args.output_file)
 
 
-
 def cmd_diversity(args: argparse.Namespace) -> None:
     rows = _registry_candidates(args)
     dump(diversity_report(rows).as_dict(), args.output_file)
 
 
-
 def cmd_generation_quota(args: argparse.Namespace) -> None:
     dump(generation_quota_report(args.iterations), args.output_file)
-
 
 
 def cmd_distributed(args: argparse.Namespace) -> None:
@@ -250,15 +238,12 @@ def cmd_distributed(args: argparse.Namespace) -> None:
     dump(summary.as_dict(), args.output_file)
 
 
-
 def cmd_registry(args: argparse.Namespace) -> None:
     dump(_registry_candidates(args), args.output_file)
 
 
-
 def cmd_registry_summary(args: argparse.Namespace) -> None:
     dump(summarize_registry(), args.output_file)
-
 
 
 def cmd_execute(args: argparse.Namespace) -> None:
@@ -272,7 +257,6 @@ def cmd_execute(args: argparse.Namespace) -> None:
     summary = execute_allocations(allocations, capital=args.capital, live=args.live)
     append_execution(summary.as_dict())
     dump(summary.as_dict(), args.output_file)
-
 
 
 def cmd_risk(args: argparse.Namespace) -> None:
@@ -294,7 +278,6 @@ def cmd_risk(args: argparse.Namespace) -> None:
     dump(drift.as_dict(), args.output_file)
 
 
-
 def cmd_daemon(args: argparse.Namespace) -> None:
     if args.forever:
         cycles = run_daemon_forever(
@@ -311,10 +294,8 @@ def cmd_daemon(args: argparse.Namespace) -> None:
     dump(cycle, args.output_file)
 
 
-
 def cmd_state(args: argparse.Namespace) -> None:
     dump(summarize_state(), args.output_file)
-
 
 
 def cmd_artifact(args: argparse.Namespace) -> None:
@@ -328,7 +309,6 @@ def cmd_artifact(args: argparse.Namespace) -> None:
     )
     path = manager.save(artifact)
     dump({"artifact_path": str(path)}, args.output_file)
-
 
 
 def build_parser() -> argparse.ArgumentParser:
