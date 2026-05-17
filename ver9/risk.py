@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any
 
+from .registry import upsert_candidate
+from .state import append_risk_event, load_state, save_state
+
 
 @dataclass(slots=True)
 class DriftSignal:
@@ -35,54 +38,56 @@ class PortfolioRiskState:
 
 
 class RiskMonitor:
-    def __init__(
-        self,
-        *,
-        max_return_gap_pct: float = -25.0,
-        max_drawdown_gap_pct: float = 8.0,
-        portfolio_quarantine_drawdown_pct: float = -15.0,
-        portfolio_loss_streak_limit: int = 4,
-    ) -> None:
+    def __init__(self, *, max_return_gap_pct: float = -25.0, max_drawdown_gap_pct: float = 8.0, portfolio_quarantine_drawdown_pct: float = -15.0, portfolio_loss_streak_limit: int = 4) -> None:
         self.max_return_gap_pct = max_return_gap_pct
         self.max_drawdown_gap_pct = max_drawdown_gap_pct
         self.portfolio_quarantine_drawdown_pct = portfolio_quarantine_drawdown_pct
         self.portfolio_loss_streak_limit = portfolio_loss_streak_limit
+
+    def _sync_drift_state(self, signal: DriftSignal) -> None:
+        state = load_state()
+        health = state.setdefault("strategy_health", {})
+        entry = health.get(signal.strategy_id) if isinstance(health, dict) else None
+        if not isinstance(entry, dict):
+            entry = {"strategy_id": signal.strategy_id, "status": "active", "approved_streak": 0, "failure_streak": 0, "recovery_streak": 0, "inactive_cycles": 0, "decay_score": 0.0, "retired": False, "retirement_reason": "", "quarantine_reason": "", "events": []}
+        if signal.quarantine:
+            entry["status"] = "quarantined"
+            entry["capital_multiplier"] = 0.0
+            entry["quarantine_reason"] = signal.reason
+        elif signal.throttle:
+            entry["status"] = "probationary"
+            entry["capital_multiplier"] = 0.5
+            entry["quarantine_reason"] = signal.reason
+        else:
+            entry["capital_multiplier"] = 1.0
+            entry["status"] = entry.get("status") or "active"
+        entry["last_drift_reason"] = signal.reason
+        health[signal.strategy_id] = entry
+        state["strategy_health"] = health
+        state.setdefault("risk_events", []).append({"strategy_id": signal.strategy_id, "event": signal.reason, "signal": signal.as_dict()})
+        save_state(state)
+        upsert_candidate({"strategy_id": signal.strategy_id, "status": entry["status"], "drift_reason": signal.reason, "capital_multiplier": entry.get("capital_multiplier", 1.0), "quarantine_reason": entry.get("quarantine_reason", "")})
+        append_risk_event({"strategy_id": signal.strategy_id, "signal": signal.as_dict(), "status": entry["status"]})
 
     def evaluate_drift(self, *, strategy_id: str, live_metrics: dict[str, Any], expected_metrics: dict[str, Any]) -> DriftSignal:
         live_return = float(live_metrics.get("return_pct") or live_metrics.get("pnl_pct") or 0.0)
         expected_return = float(expected_metrics.get("return_pct") or expected_metrics.get("pnl_pct") or 0.0)
         live_drawdown = abs(float(live_metrics.get("max_drawdown_pct") or live_metrics.get("drawdown_pct") or 0.0))
         expected_drawdown = abs(float(expected_metrics.get("max_drawdown_pct") or expected_metrics.get("drawdown_pct") or 0.0))
-
         return_gap = live_return - expected_return
         drawdown_gap = live_drawdown - expected_drawdown
-
         quarantine = return_gap <= self.max_return_gap_pct or drawdown_gap >= self.max_drawdown_gap_pct
         throttle = (return_gap <= -10.0) or (drawdown_gap >= 4.0)
-        reason = "ok"
-        if quarantine:
-            reason = "drift_quarantine"
-        elif throttle:
-            reason = "drift_throttle"
-
-        return DriftSignal(
-            strategy_id=strategy_id,
-            live_return_pct=round(live_return, 4),
-            expected_return_pct=round(expected_return, 4),
-            live_drawdown_pct=round(live_drawdown, 4),
-            expected_drawdown_pct=round(expected_drawdown, 4),
-            return_gap_pct=round(return_gap, 4),
-            drawdown_gap_pct=round(drawdown_gap, 4),
-            quarantine=quarantine,
-            throttle=throttle,
-            reason=reason,
-        )
+        reason = "drift_quarantine" if quarantine else ("drift_throttle" if throttle else "ok")
+        signal = DriftSignal(strategy_id=strategy_id, live_return_pct=round(live_return, 4), expected_return_pct=round(expected_return, 4), live_drawdown_pct=round(live_drawdown, 4), expected_drawdown_pct=round(expected_drawdown, 4), return_gap_pct=round(return_gap, 4), drawdown_gap_pct=round(drawdown_gap, 4), quarantine=quarantine, throttle=throttle, reason=reason)
+        if quarantine or throttle:
+            self._sync_drift_state(signal)
+        return signal
 
     def evaluate_portfolio(self, *, portfolio_drawdown_pct: float, rolling_loss_streak: int, volatility_regime_score: float) -> PortfolioRiskState:
         approved = True
         capital_multiplier = 1.0
         reason = "approved"
-
         if portfolio_drawdown_pct <= self.portfolio_quarantine_drawdown_pct:
             approved = False
             capital_multiplier = 0.0
@@ -94,12 +99,4 @@ class RiskMonitor:
         elif volatility_regime_score >= 0.9:
             capital_multiplier = 0.5
             reason = "volatility_throttle"
-
-        return PortfolioRiskState(
-            portfolio_drawdown_pct=round(portfolio_drawdown_pct, 4),
-            rolling_loss_streak=int(rolling_loss_streak),
-            volatility_regime_score=round(volatility_regime_score, 4),
-            approved=approved,
-            capital_multiplier=capital_multiplier,
-            reason=reason,
-        )
+        return PortfolioRiskState(portfolio_drawdown_pct=round(portfolio_drawdown_pct, 4), rolling_loss_streak=int(rolling_loss_streak), volatility_regime_score=round(volatility_regime_score, 4), approved=approved, capital_multiplier=capital_multiplier, reason=reason)
