@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -148,6 +148,15 @@ def _append_list(state: dict[str, Any], key: str, record: dict[str, Any]) -> Non
 
 
 
+def _remove_quarantine_record(state: dict[str, Any], strategy_id: str) -> None:
+    items = state.get("quarantined_strategies") or []
+    if not isinstance(items, list):
+        state["quarantined_strategies"] = []
+        return
+    state["quarantined_strategies"] = [item for item in items if not (isinstance(item, dict) and item.get("strategy_id") == strategy_id)]
+
+
+
 def _sync_registry_status(strategy_id: str, payload: dict[str, Any]) -> None:
     try:
         from .registry import upsert_candidate
@@ -238,6 +247,8 @@ def record_strategy_event(strategy_id: str, *, approved: bool, reason: str) -> d
             if entry["recovery_streak"] >= ACTIVE_RECOVERY_THRESHOLD:
                 entry["status"] = "active"
                 entry["recovery_streak"] = 0
+                entry["quarantine_reason"] = ""
+                _remove_quarantine_record(state, strategy_id)
                 _append_list(state, "recovery_events", {"strategy_id": strategy_id, "reason": "promoted_to_active", "timestamp": _now()})
         else:
             entry["recovery_streak"] = 0
@@ -257,77 +268,3 @@ def record_strategy_event(strategy_id: str, *, approved: bool, reason: str) -> d
     save_state(state)
     return entry
 
-
-
-def quarantine_strategy(strategy_id: str, reason: str) -> dict[str, Any]:
-    return record_strategy_event(strategy_id, approved=False, reason=reason)
-
-
-
-def recover_strategy(strategy_id: str, reason: str = "approved_cycle") -> dict[str, Any]:
-    return record_strategy_event(strategy_id, approved=True, reason=reason)
-
-
-
-def is_quarantined(strategy_id: str) -> bool:
-    state = load_state()
-    health = state.get("strategy_health") or {}
-    if isinstance(health, dict):
-        entry = health.get(strategy_id)
-        if isinstance(entry, dict) and str(entry.get("status") or "") == "quarantined":
-            return True
-    records = state.get("quarantined_strategies") or []
-    if isinstance(records, list):
-        return any(isinstance(item, dict) and item.get("strategy_id") == strategy_id for item in records)
-    return False
-
-
-
-def append_cycle(cycle: dict[str, Any]) -> dict[str, Any]:
-    state = load_state()
-    state["cycles"].append(cycle)
-    portfolio = cycle.get("portfolio") or []
-    active_strategy_ids = {str(row.get("strategy_id") or "") for row in portfolio if isinstance(row, dict) and str(row.get("strategy_id") or "")}
-    apply_rolling_decay(active_strategy_ids)
-    save_state(state)
-    return cycle
-
-
-
-def append_execution(execution: dict[str, Any]) -> dict[str, Any]:
-    state = load_state()
-    _append_list(state, "executions", execution)
-    save_state(state)
-    return execution
-
-
-
-def append_risk_event(event: dict[str, Any]) -> dict[str, Any]:
-    state = load_state()
-    _append_list(state, "risk_events", event)
-    save_state(state)
-    return event
-
-
-
-def summarize_state() -> dict[str, Any]:
-    state = load_state()
-    health = state.get("strategy_health") or {}
-    status_counts: dict[str, int] = {}
-    if isinstance(health, dict):
-        for value in health.values():
-            if isinstance(value, dict):
-                status = str(value.get("status") or "unknown")
-                status_counts[status] = status_counts.get(status, 0) + 1
-    return {
-        "path": str(STATE_PATH),
-        "cycle_count": len(state.get("cycles") or []),
-        "execution_count": len(state.get("executions") or []),
-        "risk_event_count": len(state.get("risk_events") or []),
-        "quarantined_count": len(state.get("quarantined_strategies") or []),
-        "recovery_count": len(state.get("recovery_events") or []),
-        "retirement_count": len(state.get("retirement_events") or []),
-        "strategy_status_counts": status_counts,
-        "latest_cycle": (state.get("cycles") or [{}])[-1] if state.get("cycles") else {},
-        "latest_execution": (state.get("executions") or [{}])[-1] if state.get("executions") else {},
-    }
