@@ -19,16 +19,6 @@ class OrderRequest:
 
 
 @dataclass(slots=True)
-class FillRecord:
-    strategy_id: str
-    symbol: str
-    side: str
-    quantity: float
-    fill_price: float
-    status: str = "filled"
-
-
-@dataclass(slots=True)
 class ExecutionSummary:
     mode: str
     requested_orders: int
@@ -41,6 +31,7 @@ class ExecutionSummary:
     per_strategy_stats: dict[str, Any] = field(default_factory=dict)
     fill_rate: float = 0.0
     average_slippage_bps: float = 0.0
+    execution_quality_score: float = 0.0
     equity_before: float = 0.0
     equity_after: float = 0.0
     capital_committed: float = 0.0
@@ -67,97 +58,67 @@ def _slippage_bps(expected_price: float | None, fill_price: float) -> float:
 
 
 
-def _build_execution_telemetry(
-    orders: list[OrderRequest],
-    fills: list[dict[str, Any]],
-    rejections: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any], float]:
-    fill_by_strategy: dict[str, int] = Counter()
+def _build_telemetry(orders: list[OrderRequest], fills: list[dict[str, Any]], rejections: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any], float, float, float]:
     request_by_strategy: dict[str, int] = Counter()
+    fill_by_strategy: dict[str, int] = Counter()
     reject_by_strategy: dict[str, int] = Counter()
     slippage_by_strategy: dict[str, list[float]] = defaultdict(list)
-    rejection_reason_counts: Counter[str] = Counter()
+    rejection_reasons: Counter[str] = Counter()
     acceptance_history: list[dict[str, Any]] = []
 
-    fills_by_key = {
-        (str(item.get("strategy_id") or ""), str(item.get("symbol") or ""), str(item.get("side") or ""), round(float(item.get("quantity") or 0.0), 8)): item
-        for item in fills
-    }
-
-    rejection_lookup = {
-        (str(item.get("strategy_id") or ""), str(item.get("symbol") or ""), item.get("reason")): item
-        for item in rejections
-    }
+    fills_by_key = {(str(f.get("strategy_id") or ""), str(f.get("symbol") or ""), str(f.get("side") or ""), round(float(f.get("quantity") or 0.0), 8)): f for f in fills}
 
     for order in orders:
-        strategy_id = order.strategy_id
-        request_by_strategy[strategy_id] += 1
-        fill_price = None
-        accepted = False
-        fill_ratio = _stable_ratio(f"{order.strategy_id}:{order.symbol}:{order.side}:{order.quantity}")
-        slippage_bps = None
+        request_by_strategy[order.strategy_id] += 1
+        fill = fills_by_key.get((order.strategy_id, order.symbol, order.side, round(float(order.quantity), 8)))
+        accepted = fill is not None
+        fill_price = float(fill.get("fill_price") or 0.0) if fill else None
+        slippage = round(_slippage_bps(order.price, fill_price), 4) if fill else None
         rejection_reason = None
-
-        fill_key = (strategy_id, order.symbol, order.side, round(float(order.quantity), 8))
-        fill = fills_by_key.get(fill_key)
-        if fill is not None:
-            accepted = True
-            fill_price = float(fill.get("fill_price") or 0.0)
-            fill_by_strategy[strategy_id] += 1
-            slippage_bps = round(_slippage_bps(order.price, fill_price), 4)
-            slippage_by_strategy[strategy_id].append(slippage_bps)
+        if accepted:
+            fill_by_strategy[order.strategy_id] += 1
+            slippage_by_strategy[order.strategy_id].append(slippage or 0.0)
         else:
-            rejection_reason = next(
-                (
-                    item.get("reason")
-                    for item in rejections
-                    if str(item.get("strategy_id") or "") == strategy_id
-                    and str(item.get("symbol") or "") == str(order.symbol or "")
-                ),
-                "unfilled",
-            )
-            reject_by_strategy[strategy_id] += 1
-            rejection_reason_counts[str(rejection_reason or "unfilled")] += 1
+            reject_by_strategy[order.strategy_id] += 1
+            rejection_reason = next((r.get("reason") for r in rejections if str(r.get("strategy_id") or "") == order.strategy_id), "unfilled")
+            rejection_reasons[str(rejection_reason or "unfilled")] += 1
 
-        acceptance_history.append(
-            {
-                "strategy_id": strategy_id,
-                "symbol": order.symbol,
-                "side": order.side,
-                "requested_quantity": round(float(order.quantity), 8),
-                "expected_price": round(float(order.price or 0.0), 4) if order.price is not None else None,
-                "fill_price": round(float(fill_price or 0.0), 4) if fill_price is not None else None,
-                "accepted": accepted,
-                "fill_ratio": round(fill_ratio, 4),
-                "slippage_bps": slippage_bps,
-                "rejection_reason": rejection_reason,
-            }
-        )
+        acceptance_history.append({
+            "strategy_id": order.strategy_id,
+            "symbol": order.symbol,
+            "side": order.side,
+            "requested_quantity": round(float(order.quantity), 8),
+            "expected_price": round(float(order.price or 0.0), 4) if order.price is not None else None,
+            "fill_price": round(float(fill_price or 0.0), 4) if fill_price is not None else None,
+            "accepted": accepted,
+            "fill_ratio": round(_stable_ratio(f"{order.strategy_id}:{order.symbol}:{order.side}:{order.quantity}"), 4),
+            "slippage_bps": slippage,
+            "rejection_reason": rejection_reason,
+        })
 
     per_strategy_stats: dict[str, Any] = {}
     for strategy_id in sorted(set(request_by_strategy) | set(fill_by_strategy) | set(reject_by_strategy)):
-        fills_count = fill_by_strategy.get(strategy_id, 0)
-        requests_count = request_by_strategy.get(strategy_id, 0)
-        rejects_count = reject_by_strategy.get(strategy_id, 0)
+        req = request_by_strategy.get(strategy_id, 0)
+        fills_n = fill_by_strategy.get(strategy_id, 0)
+        rej = reject_by_strategy.get(strategy_id, 0)
         slippage_values = slippage_by_strategy.get(strategy_id, [])
+        fill_rate = (fills_n / req) if req else 0.0
+        avg_slip = (sum(slippage_values) / len(slippage_values)) if slippage_values else 0.0
         per_strategy_stats[strategy_id] = {
-            "requested_orders": requests_count,
-            "filled_orders": fills_count,
-            "rejected_orders": rejects_count,
-            "fill_rate": round((fills_count / requests_count) if requests_count else 0.0, 6),
-            "average_slippage_bps": round((sum(slippage_values) / len(slippage_values)) if slippage_values else 0.0, 4),
+            "requested_orders": req,
+            "filled_orders": fills_n,
+            "rejected_orders": rej,
+            "fill_rate": round(fill_rate, 6),
+            "average_slippage_bps": round(avg_slip, 4),
+            "execution_quality_score": round(max(0.0, (fill_rate * 0.55) + ((1.0 - min(abs(avg_slip) / 250.0, 1.0)) * 0.45)), 6),
         }
 
-    rejection_telemetry = {
-        "reasons": dict(rejection_reason_counts),
-        "total_rejections": len(rejections),
-        "unique_strategies_rejected": len(reject_by_strategy),
-    }
-
     fill_rate = round((len(fills) / len(orders)) if orders else 0.0, 6)
-    all_slippage = [value for values in slippage_by_strategy.values() for value in values]
-    average_slippage_bps = round((sum(all_slippage) / len(all_slippage)) if all_slippage else 0.0, 4)
-    return acceptance_history, rejection_telemetry, per_strategy_stats, fill_rate, average_slippage_bps
+    all_slippage = [x for vals in slippage_by_strategy.values() for x in vals]
+    avg_slippage = round((sum(all_slippage) / len(all_slippage)) if all_slippage else 0.0, 4)
+    rejection_telemetry = {"reasons": dict(rejection_reasons), "total_rejections": len(rejections), "unique_strategies_rejected": len(reject_by_strategy)}
+    execution_quality_score = round(max(0.0, min(1.0, (fill_rate * 0.5) + ((1.0 - min(abs(avg_slippage) / 250.0, 1.0)) * 0.35) + ((1.0 - (len(rejections) / len(orders) if orders else 0.0)) * 0.15))), 6)
+    return acceptance_history, rejection_telemetry, per_strategy_stats, fill_rate, avg_slippage, execution_quality_score
 
 
 class PaperBroker:
@@ -169,40 +130,18 @@ class PaperBroker:
         fills: list[dict[str, Any]] = []
         rejections: list[dict[str, Any]] = []
         committed = 0.0
-
         for order in orders:
-            fill_ratio = _stable_ratio(f"{order.strategy_id}:{order.symbol}:{order.side}:{order.quantity}")
-            if fill_ratio < self.fill_threshold:
+            ratio = _stable_ratio(f"{order.strategy_id}:{order.symbol}:{order.side}:{order.quantity}")
+            if ratio < self.fill_threshold:
                 order.status = "rejected"
-                rejections.append(
-                    {
-                        "strategy_id": order.strategy_id,
-                        "symbol": order.symbol,
-                        "reason": "fill_simulation_below_threshold",
-                        "fill_ratio": round(fill_ratio, 4),
-                    }
-                )
+                rejections.append({"strategy_id": order.strategy_id, "symbol": order.symbol, "reason": "fill_simulation_below_threshold", "fill_ratio": round(ratio, 4)})
                 continue
-
-            fill_price = order.price if order.price is not None else 100.0 + (fill_ratio * 7.5)
-            fills.append(
-                {
-                    "strategy_id": order.strategy_id,
-                    "symbol": order.symbol,
-                    "side": order.side,
-                    "quantity": round(order.quantity, 8),
-                    "fill_price": round(fill_price, 4),
-                }
-            )
+            fill_price = order.price if order.price is not None else 100.0 + (ratio * 7.5)
+            fills.append({"strategy_id": order.strategy_id, "symbol": order.symbol, "side": order.side, "quantity": round(order.quantity, 8), "fill_price": round(fill_price, 4)})
             committed += float(order.quantity) * float(fill_price)
             order.status = "filled"
 
-        acceptance_history, rejection_telemetry, per_strategy_stats, fill_rate, avg_slippage_bps = _build_execution_telemetry(
-            orders,
-            fills,
-            rejections,
-        )
-
+        acceptance_history, rejection_telemetry, per_strategy_stats, fill_rate, avg_slippage_bps, exec_quality = _build_telemetry(orders, fills, rejections)
         equity_after = max(0.0, self.equity - committed * 0.001)
         return ExecutionSummary(
             mode="paper",
@@ -216,6 +155,7 @@ class PaperBroker:
             per_strategy_stats=per_strategy_stats,
             fill_rate=fill_rate,
             average_slippage_bps=avg_slippage_bps,
+            execution_quality_score=exec_quality,
             equity_before=self.equity,
             equity_after=round(equity_after, 4),
             capital_committed=round(committed, 4),
@@ -237,26 +177,15 @@ def build_orders_from_allocations(allocations: list[dict[str, Any]], *, capital:
         pct = float(allocation.get("allocation_pct") or 0.0)
         if pct <= 0:
             continue
-        order_capital = capital * pct
         symbol = str(allocation.get("symbol") or "")
         strategy_id = str(allocation.get("strategy_id") or "")
         family = str(allocation.get("family") or "")
-        side = "buy" if family in {"mean_reversion", "volatility_compression"} else "buy"
-        quantity = max(0.0, order_capital / 100.0)
-        orders.append(
-            OrderRequest(
-                strategy_id=strategy_id,
-                symbol=symbol,
-                side=side,
-                quantity=round(quantity, 8),
-                price=100.0 + (_stable_ratio(strategy_id + symbol) * 9.0),
-            )
-        )
+        qty = max(0.0, (capital * pct) / 100.0)
+        orders.append(OrderRequest(strategy_id=strategy_id, symbol=symbol, side="buy" if family in {"mean_reversion", "volatility_compression"} else "buy", quantity=round(qty, 8), price=100.0 + (_stable_ratio(strategy_id + symbol) * 9.0)))
     return orders
 
 
 
 def execute_allocations(allocations: list[dict[str, Any]], *, capital: float, live: bool = False) -> ExecutionSummary:
     broker: Broker = LiveBroker(equity=capital) if live else PaperBroker(equity=capital)
-    orders = build_orders_from_allocations(allocations, capital=capital)
-    return broker.submit(orders)
+    return broker.submit(build_orders_from_allocations(allocations, capital=capital))
