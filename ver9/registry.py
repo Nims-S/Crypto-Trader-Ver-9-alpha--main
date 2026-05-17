@@ -93,8 +93,20 @@ def _ensure_defaults(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 
-def _is_valid_record(record: Any) -> bool:
-    if not isinstance(record, dict):
+def _is_safe_container(record: Any) -> bool:
+    return isinstance(record, dict)
+
+
+
+def _is_recoverable_record(record: Any) -> bool:
+    if not _is_safe_container(record):
+        return False
+    return bool(str(record.get("strategy_id") or "").strip())
+
+
+
+def _is_tradeable_record(record: Any) -> bool:
+    if not _is_safe_container(record):
         return False
     for field in REQUIRED_FIELDS:
         if not str(record.get(field) or "").strip():
@@ -163,9 +175,17 @@ def _migrate_legacy_entries(state: dict[str, Any]) -> bool:
     changed = False
 
     for strategy_id, record in list(entries.items()):
-        if not _is_valid_record(record):
-            _quarantine_record(state, strategy_id, record, "malformed_record")
+        if not _is_safe_container(record):
+            _quarantine_record(state, strategy_id, record, "unsafe_record")
             del entries[strategy_id]
+            changed = True
+            continue
+
+        if not _is_recoverable_record(record):
+            _quarantine_record(state, strategy_id, record, "recoverable_but_incomplete")
+            entries[strategy_id] = dict(record)
+            entries[strategy_id]["status"] = str(entries[strategy_id].get("status") or "candidate")
+            entries[strategy_id]["legacy_strategy_id"] = strategy_id
             changed = True
             continue
 
@@ -267,7 +287,7 @@ def list_candidates(*, status: str | None = None, family: str | None = None, sym
         filtered: list[dict[str, Any]] = []
 
         for row in rows:
-            if not _is_valid_record(row):
+            if not _is_tradeable_record(row):
                 continue
 
             _, row = _normalize_record(str(row.get("strategy_id") or ""), row)
@@ -294,7 +314,7 @@ def get_candidate(strategy_id: str) -> dict[str, Any] | None:
             return None
 
         value = entries.get(strategy_id)
-        if not isinstance(value, dict) or not _is_valid_record(value):
+        if not isinstance(value, dict) or not _is_recoverable_record(value):
             return None
 
         _, value = _normalize_record(strategy_id, value)
