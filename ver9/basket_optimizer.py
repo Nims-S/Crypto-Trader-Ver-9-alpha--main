@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import asdict, dataclass, field
+from datetime import datetime, UTC
 from statistics import mean
 from typing import Any
 
@@ -21,9 +22,9 @@ REGIME_MULTIPLIERS = {
     "adaptive": 1.0,
 }
 
-DEFAULT_MAX_STRATEGY_WEIGHT = 0.45
-DEFAULT_MAX_SYMBOL_WEIGHT = 0.55
-DEFAULT_MAX_FAMILY_WEIGHT = 0.65
+DEFAULT_MAX_STRATEGY_WEIGHT = 0.30
+DEFAULT_MAX_SYMBOL_WEIGHT = 0.40
+DEFAULT_MAX_FAMILY_WEIGHT = 0.45
 DEFAULT_CORRELATION_PENALTY_SCALE = 0.25
 
 
@@ -38,6 +39,40 @@ def _to_float(value: Any, default: float = 0.0) -> float:
 def _symbol_root(symbol: str) -> str:
     symbol = str(symbol or "").upper()
     return symbol.split("/")[0] if symbol else "UNKNOWN"
+
+
+
+def _parse_dt(value: Any) -> datetime | None:
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=UTC)
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+
+def _age_days(updated_at: Any) -> float:
+    dt = _parse_dt(updated_at)
+    if not dt:
+        return 9999.0
+    return max(0.0, (datetime.now(UTC) - dt.astimezone(UTC)).total_seconds() / 86400.0)
+
+
+
+def _freshness_multiplier(updated_at: Any) -> float:
+    days = _age_days(updated_at)
+    if days <= 3:
+        return 1.0
+    if days <= 7:
+        return 0.9
+    if days <= 14:
+        return 0.75
+    if days <= 30:
+        return 0.5
+    return 0.2
 
 
 @dataclass(slots=True)
@@ -135,6 +170,9 @@ class BasketOptimizer:
         regime = str(candidate.get("regime") or "adaptive").lower()
         family_mult = FAMILY_MULTIPLIERS.get(family, 1.0)
         regime_mult = REGIME_MULTIPLIERS.get(regime, 1.0)
+        freshness = _freshness_multiplier(candidate.get("updated_at"))
+        exec_quality = max(0.2, min(1.0, _to_float(candidate.get("execution_quality_score"), 1.0)))
+        capital_multiplier = max(0.0, min(1.0, _to_float(candidate.get("capital_multiplier"), 1.0)))
 
         base = (
             (pf * 2.5)
@@ -143,7 +181,7 @@ class BasketOptimizer:
             + (min(trades, 400) / 400.0) * 0.8
             + validation_boost
         )
-        score = (base * family_mult * regime_mult) / max(dd, 1.0)
+        score = (base * family_mult * regime_mult * freshness * exec_quality * capital_multiplier) / max(dd, 1.0)
         return round(score, 6)
 
     def _pair_penalty(self, candidate: dict[str, Any], selected: list[dict[str, Any]]) -> float:
@@ -152,12 +190,14 @@ class BasketOptimizer:
         candidate_family = str(candidate.get("family") or "unknown").lower()
         candidate_regime = str(candidate.get("regime") or "adaptive").lower()
         candidate_timeframe = str(candidate.get("timeframe") or "unknown").lower()
+        candidate_corr = abs(_to_float(candidate.get("correlation_hint"), 0.0))
 
         for row in selected:
             selected_symbol = _symbol_root(str(row.get("symbol") or ""))
             selected_family = str(row.get("family") or "unknown").lower()
             selected_regime = str(row.get("regime") or "adaptive").lower()
             selected_timeframe = str(row.get("timeframe") or "unknown").lower()
+            selected_corr = abs(_to_float(row.get("correlation_hint"), 0.0))
 
             if candidate_symbol == selected_symbol:
                 penalty += 1.75
@@ -167,13 +207,7 @@ class BasketOptimizer:
                 penalty += 0.30
             if candidate_timeframe == selected_timeframe:
                 penalty += 0.10
-
-            correlation_hint = _to_float(candidate.get("correlation_hint"), 0.0)
-            if correlation_hint:
-                penalty += abs(correlation_hint) * 0.25
-            correlation_hint = _to_float(row.get("correlation_hint"), 0.0)
-            if correlation_hint:
-                penalty += abs(correlation_hint) * 0.15
+            penalty += (candidate_corr * 0.25) + (selected_corr * 0.15)
 
         return round(penalty, 6)
 
@@ -215,40 +249,47 @@ class BasketOptimizer:
             strategy_id = str(row.get("strategy_id") or row.get("candidate_id") or "unknown")
             symbol = _symbol_root(str(row.get("symbol") or ""))
             family = str(row.get("family") or "unknown").lower()
+            capital_multiplier = max(0.0, min(1.0, _to_float(row.get("capital_multiplier"), 1.0)))
             symbol_cap = self.max_symbol_weight / max(1, symbol_counts.get(symbol, 1))
             family_cap = self.max_family_weight / max(1, family_counts.get(family, 1))
-            caps[strategy_id] = min(self.max_strategy_weight, symbol_cap, family_cap)
+            caps[strategy_id] = min(self.max_strategy_weight, symbol_cap, family_cap) * capital_multiplier
         return caps
 
     def _build_weights(self, selected: list[dict[str, Any]]) -> tuple[dict[str, float], dict[str, Any]]:
         if not selected:
-            return {}, {"cash_weight": 1.0, "allocation_caps": {}}
+            return {}, {"cash_weight": 1.0, "allocation_caps": {}, "family_caps": {}, "covariance_penalty": 0.0}
 
         raw_scores: dict[str, float] = {}
+        selected_lookup = {str(row.get("strategy_id") or row.get("candidate_id") or "unknown"): row for row in selected}
         for row in selected:
             strategy_id = str(row.get("strategy_id") or row.get("candidate_id") or "unknown")
             base_score = max(_to_float(row.get("basket_score"), 0.0), 0.0)
-            correlation = max(_to_float(row.get("pair_penalty"), 0.0), 0.0)
-            correlation += abs(_to_float(row.get("correlation_hint"), 0.0))
-            adjusted = base_score / (1.0 + (self.correlation_penalty_scale * correlation))
+            pair_penalty = max(_to_float(row.get("pair_penalty"), 0.0), 0.0)
+            corr_hint = abs(_to_float(row.get("correlation_hint"), 0.0))
+            exec_quality = max(0.2, min(1.0, _to_float(row.get("execution_quality_score"), 1.0)))
+            freshness = _freshness_multiplier(row.get("updated_at"))
+            adjusted = (base_score / (1.0 + (self.correlation_penalty_scale * (pair_penalty + corr_hint)))) * exec_quality * freshness
             raw_scores[strategy_id] = adjusted
 
         total_score = sum(raw_scores.values())
-        if total_score <= 0:
-            normalized = {strategy_id: 1.0 / len(raw_scores) for strategy_id in raw_scores}
-        else:
-            normalized = {strategy_id: score / total_score for strategy_id, score in raw_scores.items()}
+        normalized = {strategy_id: (score / total_score if total_score > 0 else 1.0 / len(raw_scores)) for strategy_id, score in raw_scores.items()}
 
         caps = self._allocation_caps(selected)
+        family_caps = {family: self.max_family_weight for family in {str(row.get("family") or "unknown").lower() for row in selected}}
         weights = dict(normalized)
         cash_weight = 0.0
 
-        for _ in range(8):
+        for _ in range(10):
             excess = 0.0
             room_total = 0.0
             room_map: dict[str, float] = {}
+            family_totals: dict[str, float] = Counter()
+            symbol_totals: dict[str, float] = Counter()
 
             for strategy_id, current_weight in list(weights.items()):
+                row = selected_lookup.get(strategy_id, {})
+                family = str(row.get("family") or "unknown").lower()
+                symbol = _symbol_root(str(row.get("symbol") or ""))
                 cap = caps.get(strategy_id, self.max_strategy_weight)
                 clipped = min(current_weight, cap)
                 excess += current_weight - clipped
@@ -256,6 +297,20 @@ class BasketOptimizer:
                 room_map[strategy_id] = room
                 room_total += room
                 weights[strategy_id] = clipped
+                family_totals[family] += clipped
+                symbol_totals[symbol] += clipped
+
+            for family, total in list(family_totals.items()):
+                if total > family_caps.get(family, self.max_family_weight):
+                    overflow = total - family_caps[family]
+                    excess += overflow
+                    shared = [sid for sid, row in selected_lookup.items() if str(row.get("family") or "unknown").lower() == family]
+                    if shared:
+                        per = overflow / len(shared)
+                        for sid in shared:
+                            weights[sid] = max(0.0, weights[sid] - per)
+                            room_map[sid] = max(0.0, room_map.get(sid, 0.0) + per)
+                        room_total += overflow
 
             if excess <= 1e-9:
                 break
@@ -272,12 +327,15 @@ class BasketOptimizer:
 
         used = sum(weights.values())
         cash_weight = max(0.0, 1.0 - used)
+        covariance_penalty = round(sum(max(_to_float(row.get("pair_penalty"), 0.0), abs(_to_float(row.get("correlation_hint"), 0.0))) for row in selected), 6)
         telemetry = {
             "allocation_caps": caps,
+            "family_caps": family_caps,
             "cash_weight": round(cash_weight, 6),
             "raw_weight_sum": round(sum(normalized.values()), 6),
             "used_weight_sum": round(used, 6),
             "correlation_adjusted": True,
+            "covariance_penalty": covariance_penalty,
         }
         return weights, telemetry
 
@@ -357,7 +415,7 @@ class BasketOptimizer:
                 probationary=True,
                 max_positions=self.max_positions,
                 min_positions=self.min_positions,
-                allocation_telemetry={"cash_weight": 1.0, "allocation_caps": {}},
+                allocation_telemetry={"cash_weight": 1.0, "allocation_caps": {}, "family_caps": {}, "covariance_penalty": 0.0},
             )
 
         weights, telemetry = self._build_weights(selected)
