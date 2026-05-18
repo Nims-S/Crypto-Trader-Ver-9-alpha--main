@@ -89,12 +89,21 @@ class Version9Daemon:
             return "selection_starved"
         return "selection_complete"
 
+    def _thin_basket_note(self, candidate_count: int, selected_count: int, selection_reason: str) -> str | None:
+        if candidate_count == 1:
+            return f"thin_basket_constrained_mode:{selection_reason}"
+        if selected_count == 1:
+            return f"thin_basket_single_position:{selection_reason}"
+        return None
+
     def build_cycle(self) -> dict[str, Any]:
         candidates, source_counts, selection_reason = self._eligible_candidates()
         candidate_count = len(candidates)
         effective_min_positions = 1 if candidate_count < 2 else 2
         portfolio = allocate(candidates, max_positions=self.max_positions, min_positions=effective_min_positions)
         selected_count = len(portfolio)
+        selected_source_count = source_counts.get(selection_reason, candidate_count)
+        thin_basket_note = self._thin_basket_note(candidate_count, selected_count, selection_reason)
 
         if selected_count <= 0:
             failure_reason = self._selection_failure_reason(candidate_count, selected_count)
@@ -127,7 +136,10 @@ class Version9Daemon:
                 "candidate_count": candidate_count,
                 "candidate_source_counts": source_counts,
                 "selected_count": selected_count,
+                "selected_source": selection_reason,
+                "selected_source_count": selected_source_count,
                 "selection_reason": selection_reason if candidate_count > 0 else failure_reason,
+                "thin_basket_note": thin_basket_note,
                 "portfolio": [],
                 "execution": empty_execution,
                 "risk": {
@@ -211,7 +223,10 @@ class Version9Daemon:
             "candidate_count": candidate_count,
             "candidate_source_counts": source_counts,
             "selected_count": selected_count,
+            "selected_source": selection_reason,
+            "selected_source_count": selected_source_count,
             "selection_reason": selection_reason,
+            "thin_basket_note": thin_basket_note,
             "portfolio": portfolio,
             "execution": execution.as_dict(),
             "risk": risk_state.as_dict(),
