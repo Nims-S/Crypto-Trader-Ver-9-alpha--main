@@ -169,6 +169,57 @@ def _sync_registry_status(strategy_id: str, payload: dict[str, Any]) -> None:
 
 
 
+def append_risk_event(event: dict[str, Any]) -> dict[str, Any]:
+    state = load_state()
+    _append_list(state, "risk_events", event)
+    save_state(state)
+    return event
+
+
+
+def append_execution(execution: dict[str, Any]) -> dict[str, Any]:
+    state = load_state()
+    _append_list(state, "executions", execution)
+    save_state(state)
+    return execution
+
+
+
+def append_cycle(cycle: dict[str, Any]) -> dict[str, Any]:
+    state = load_state()
+    _append_list(state, "cycles", cycle)
+    portfolio = cycle.get("portfolio") or []
+    active_strategy_ids = {str(row.get("strategy_id") or "") for row in portfolio if isinstance(row, dict) and str(row.get("strategy_id") or "")}
+    apply_rolling_decay(active_strategy_ids)
+    save_state(state)
+    return cycle
+
+
+
+def summarize_state() -> dict[str, Any]:
+    state = load_state()
+    health = state.get("strategy_health") or {}
+    status_counts: dict[str, int] = {}
+    if isinstance(health, dict):
+        for value in health.values():
+            if isinstance(value, dict):
+                status = str(value.get("status") or "unknown")
+                status_counts[status] = status_counts.get(status, 0) + 1
+    return {
+        "path": str(STATE_PATH),
+        "cycle_count": len(state.get("cycles") or []),
+        "execution_count": len(state.get("executions") or []),
+        "risk_event_count": len(state.get("risk_events") or []),
+        "quarantined_count": len(state.get("quarantined_strategies") or []),
+        "recovery_count": len(state.get("recovery_events") or []),
+        "retirement_count": len(state.get("retirement_events") or []),
+        "strategy_status_counts": status_counts,
+        "latest_cycle": (state.get("cycles") or [{}])[-1] if state.get("cycles") else {},
+        "latest_execution": (state.get("executions") or [{}])[-1] if state.get("executions") else {},
+    }
+
+
+
 def is_quarantined(strategy_id: str) -> bool:
     state = load_state()
     entry = _health_entry(state, strategy_id)
@@ -177,12 +228,57 @@ def is_quarantined(strategy_id: str) -> bool:
 
 
 def quarantine_strategy(strategy_id: str, reason: str = "manual") -> dict[str, Any]:
-    return record_strategy_event(strategy_id, approved=False, reason=reason)
+    state = load_state()
+    entry = _health_entry(state, strategy_id)
+    entry["approved_streak"] = 0
+    entry["failure_streak"] = int(entry.get("failure_streak") or 0) + 1
+    entry["recovery_streak"] = 0
+    entry["quarantine_reason"] = reason
+    entry["status"] = "quarantined"
+    entry["events"] = list(entry.get("events") or []) + [{"approved": False, "reason": reason, "timestamp": _now()}]
+    entry["last_updated"] = _now()
+    state["strategy_health"][strategy_id] = entry
+    _append_list(state, "quarantined_strategies", {"strategy_id": strategy_id, "reason": reason, "timestamp": _now()})
+    _sync_registry_status(strategy_id, {"status": "quarantined", "quarantine_reason": reason})
+    save_state(state)
+    return entry
 
 
 
 def recover_strategy(strategy_id: str, reason: str = "recovery") -> dict[str, Any]:
-    return record_strategy_event(strategy_id, approved=True, reason=reason)
+    state = load_state()
+    entry = _health_entry(state, strategy_id)
+    current_status = str(entry.get("status") or "active")
+
+    entry["approved_streak"] = int(entry.get("approved_streak") or 0) + 1
+    entry["failure_streak"] = 0
+    entry["retired"] = False
+    entry["retirement_reason"] = ""
+
+    if current_status == "quarantined":
+        entry["recovery_streak"] = int(entry.get("recovery_streak") or 0) + 1
+        if entry["recovery_streak"] >= RECOVERY_THRESHOLD:
+            entry["status"] = "probationary"
+            entry["quarantine_reason"] = ""
+            entry["recovery_streak"] = 0
+            _append_list(state, "recovery_events", {"strategy_id": strategy_id, "reason": "recovered_from_quarantine", "timestamp": _now()})
+    elif current_status == "probationary":
+        entry["recovery_streak"] = int(entry.get("recovery_streak") or 0) + 1
+        if entry["recovery_streak"] >= ACTIVE_RECOVERY_THRESHOLD:
+            entry["status"] = "active"
+            entry["recovery_streak"] = 0
+            entry["quarantine_reason"] = ""
+            _remove_quarantine_record(state, strategy_id)
+            _append_list(state, "recovery_events", {"strategy_id": strategy_id, "reason": "promoted_to_active", "timestamp": _now()})
+    else:
+        entry["recovery_streak"] = 0
+
+    entry["events"] = list(entry.get("events") or []) + [{"approved": True, "reason": reason, "timestamp": _now()}]
+    entry["last_updated"] = _now()
+    state["strategy_health"][strategy_id] = entry
+    _sync_registry_status(strategy_id, {"status": entry.get("status"), "retired": bool(entry.get("retired")), "retirement_reason": entry.get("retirement_reason", ""), "quarantine_reason": entry.get("quarantine_reason", ""), "decay_score": round(float(entry.get("decay_score") or 0.0), 4)})
+    save_state(state)
+    return entry
 
 
 
@@ -239,72 +335,3 @@ def apply_rolling_decay(active_strategy_ids: set[str] | list[str] | None = None)
     if changed:
         save_state(state)
     return state
-
-
-
-def record_strategy_event(strategy_id: str, *, approved: bool, reason: str) -> dict[str, Any]:
-    state = load_state()
-    entry = _health_entry(state, strategy_id)
-    current_status = str(entry.get("status") or "active")
-
-    if approved:
-        entry["approved_streak"] = int(entry.get("approved_streak") or 0) + 1
-        entry["failure_streak"] = 0
-        entry["retired"] = False
-        entry["retirement_reason"] = ""
-        if current_status == "quarantined":
-            entry["recovery_streak"] = int(entry.get("recovery_streak") or 0) + 1
-            if entry["recovery_streak"] >= RECOVERY_THRESHOLD:
-                entry["status"] = "probationary"
-                entry["quarantine_reason"] = ""
-                entry["recovery_streak"] = 0
-                _append_list(state, "recovery_events", {"strategy_id": strategy_id, "reason": "recovered_from_quarantine", "timestamp": _now()})
-        elif current_status == "probationary":
-            entry["recovery_streak"] = int(entry.get("recovery_streak") or 0) + 1
-            if entry["recovery_streak"] >= ACTIVE_RECOVERY_THRESHOLD:
-                entry["status"] = "active"
-                entry["recovery_streak"] = 0
-                entry["quarantine_reason"] = ""
-                _remove_quarantine_record(state, strategy_id)
-                _append_list(state, "recovery_events", {"strategy_id": strategy_id, "reason": "promoted_to_active", "timestamp": _now()})
-        else:
-            entry["recovery_streak"] = 0
-    else:
-        entry["approved_streak"] = 0
-        entry["failure_streak"] = int(entry.get("failure_streak") or 0) + 1
-        entry["recovery_streak"] = 0
-        entry["quarantine_reason"] = reason
-        entry["status"] = "quarantined"
-        if entry["failure_streak"] >= FAILURE_THRESHOLD:
-            _append_list(state, "quarantined_strategies", {"strategy_id": strategy_id, "reason": reason, "timestamp": _now()})
-
-    entry["events"] = list(entry.get("events") or []) + [{"approved": approved, "reason": reason, "timestamp": _now()}]
-    entry["last_updated"] = _now()
-    state["strategy_health"][strategy_id] = entry
-    _sync_registry_status(strategy_id, {"status": entry.get("status"), "retired": bool(entry.get("retired")), "retirement_reason": entry.get("retirement_reason", ""), "quarantine_reason": entry.get("quarantine_reason", ""), "decay_score": round(float(entry.get("decay_score") or 0.0), 4)})
-    save_state(state)
-    return entry
-
-
-
-def summarize_state() -> dict[str, Any]:
-    state = load_state()
-    health = state.get("strategy_health") or {}
-    status_counts: dict[str, int] = {}
-    if isinstance(health, dict):
-        for value in health.values():
-            if isinstance(value, dict):
-                status = str(value.get("status") or "unknown")
-                status_counts[status] = status_counts.get(status, 0) + 1
-    return {
-        "path": str(STATE_PATH),
-        "cycle_count": len(state.get("cycles") or []),
-        "execution_count": len(state.get("executions") or []),
-        "risk_event_count": len(state.get("risk_events") or []),
-        "quarantined_count": len(state.get("quarantined_strategies") or []),
-        "recovery_count": len(state.get("recovery_events") or []),
-        "retirement_count": len(state.get("retirement_events") or []),
-        "strategy_status_counts": status_counts,
-        "latest_cycle": (state.get("cycles") or [{}])[-1] if state.get("cycles") else {},
-        "latest_execution": (state.get("executions") or [{}])[-1] if state.get("executions") else {},
-    }
