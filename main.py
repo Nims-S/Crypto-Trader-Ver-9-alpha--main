@@ -298,6 +298,10 @@ def cmd_state(args: argparse.Namespace) -> None:
     dump(summarize_state(), args.output_file)
 
 
+def cmd_complete_state(args: argparse.Namespace) -> None:
+    cmd_state(args)
+
+
 def cmd_artifact(args: argparse.Namespace) -> None:
     manager = ArtifactManager()
     artifact = build_artifact(
@@ -439,6 +443,10 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("state")
     p.add_argument("--output-file", default=None)
     p.set_defaults(func=cmd_state)
+
+    p = sub.add_parser("complete-state")
+    p.add_argument("--output-file", default=None)
+    p.set_defaults(func=cmd_complete_state)
 
     p = sub.add_parser("artifact")
     p.add_argument("--cycle-id", default="cycle_alpha")
