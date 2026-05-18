@@ -284,3 +284,27 @@ def record_strategy_event(strategy_id: str, *, approved: bool, reason: str) -> d
     _sync_registry_status(strategy_id, {"status": entry.get("status"), "retired": bool(entry.get("retired")), "retirement_reason": entry.get("retirement_reason", ""), "quarantine_reason": entry.get("quarantine_reason", ""), "decay_score": round(float(entry.get("decay_score") or 0.0), 4)})
     save_state(state)
     return entry
+
+
+
+def summarize_state() -> dict[str, Any]:
+    state = load_state()
+    health = state.get("strategy_health") or {}
+    status_counts: dict[str, int] = {}
+    if isinstance(health, dict):
+        for value in health.values():
+            if isinstance(value, dict):
+                status = str(value.get("status") or "unknown")
+                status_counts[status] = status_counts.get(status, 0) + 1
+    return {
+        "path": str(STATE_PATH),
+        "cycle_count": len(state.get("cycles") or []),
+        "execution_count": len(state.get("executions") or []),
+        "risk_event_count": len(state.get("risk_events") or []),
+        "quarantined_count": len(state.get("quarantined_strategies") or []),
+        "recovery_count": len(state.get("recovery_events") or []),
+        "retirement_count": len(state.get("retirement_events") or []),
+        "strategy_status_counts": status_counts,
+        "latest_cycle": (state.get("cycles") or [{}])[-1] if state.get("cycles") else {},
+        "latest_execution": (state.get("executions") or [{}])[-1] if state.get("executions") else {},
+    }
