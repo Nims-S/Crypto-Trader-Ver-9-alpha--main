@@ -74,7 +74,7 @@ class Version9Daemon:
         if candidate_count <= 0:
             return "no_eligible_candidates"
         if selected_count <= 0:
-            return "portfolio_selection_empty_after_filtering"
+            return "insufficient_selected_candidates"
         if selected_count < self.max_positions:
             return "insufficient_selected_candidates"
         return "selection_complete"
@@ -125,12 +125,12 @@ class Version9Daemon:
                     "rejected_orders": 0,
                 },
                 "transition_summary": [],
-                "state_summary": summarize_state(),
             }
 
             append_cycle(cycle)
             append_execution(empty_execution)
             append_risk_event({"approved": False, "reason": failure_reason})
+            cycle["state_summary"] = summarize_state()
             return cycle
 
         execution = execute_allocations(portfolio, capital=self.capital, live=self.live)
@@ -204,12 +204,12 @@ class Version9Daemon:
                 "rejected_orders": rejected_orders,
             },
             "transition_summary": transition_summary,
-            "state_summary": summarize_state(),
         }
 
         append_cycle(cycle)
         append_execution(execution.as_dict())
         append_risk_event(risk_state.as_dict())
+        cycle["state_summary"] = summarize_state()
 
         return cycle
 
