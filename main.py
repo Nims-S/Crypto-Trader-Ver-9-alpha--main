@@ -105,6 +105,7 @@ def _with_allocation_telemetry(summary: dict) -> dict:
     return payload
 
 
+
 def cmd_evolve(args: argparse.Namespace) -> None:
     generated = generate_candidates(iterations=args.iterations)
 
@@ -184,6 +185,7 @@ def cmd_evolve(args: argparse.Namespace) -> None:
         },
         args.output_file,
     )
+
 
 
 def _registry_candidates(args: argparse.Namespace) -> list[dict]:
@@ -292,6 +294,28 @@ def cmd_daemon(args: argparse.Namespace) -> None:
 
     cycle = run_daemon_once(capital=args.capital, max_positions=args.max_positions, live=args.live)
     dump(cycle, args.output_file)
+
+
+def cmd_daemon_once(args: argparse.Namespace) -> None:
+    run_args = argparse.Namespace(
+        capital=args.capital,
+        max_positions=args.max_positions,
+        live=args.live,
+        output_file=args.output_file,
+    )
+    cycle = run_daemon_once(capital=run_args.capital, max_positions=run_args.max_positions, live=run_args.live)
+    dump(cycle, run_args.output_file)
+
+
+def cmd_daemon_forever(args: argparse.Namespace) -> None:
+    cycles = run_daemon_forever(
+        capital=args.capital,
+        max_positions=args.max_positions,
+        live=args.live,
+        cycle_interval_seconds=args.cycle_interval_seconds,
+        max_cycles=args.max_cycles,
+    )
+    dump({"cycles": cycles, "mode": "continuous"}, args.output_file)
 
 
 def cmd_state(args: argparse.Namespace) -> None:
@@ -439,6 +463,22 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--max-cycles", type=int, default=None)
     p.add_argument("--output-file", default=None)
     p.set_defaults(func=cmd_daemon)
+
+    p = sub.add_parser("daemon-once")
+    p.add_argument("--capital", type=float, default=10000.0)
+    p.add_argument("--max-positions", type=int, default=3)
+    p.add_argument("--live", action="store_true")
+    p.add_argument("--output-file", default=None)
+    p.set_defaults(func=cmd_daemon_once)
+
+    p = sub.add_parser("daemon-forever")
+    p.add_argument("--capital", type=float, default=10000.0)
+    p.add_argument("--max-positions", type=int, default=3)
+    p.add_argument("--live", action="store_true")
+    p.add_argument("--cycle-interval-seconds", type=float, default=5.0)
+    p.add_argument("--max-cycles", type=int, default=None)
+    p.add_argument("--output-file", default=None)
+    p.set_defaults(func=cmd_daemon_forever)
 
     p = sub.add_parser("state")
     p.add_argument("--output-file", default=None)
