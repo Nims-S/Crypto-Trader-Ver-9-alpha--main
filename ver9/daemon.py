@@ -70,11 +70,24 @@ class Version9Daemon:
             return True, "execution_partial_fill", fill_rate
         return True, "execution_full_fill", fill_rate
 
+    def _selection_failure_reason(self, candidate_count: int, selected_count: int) -> str:
+        if candidate_count <= 0:
+            return "no_eligible_candidates"
+        if selected_count <= 0:
+            return "portfolio_selection_empty_after_filtering"
+        if selected_count < self.max_positions:
+            return "insufficient_selected_candidates"
+        return "selection_complete"
+
     def build_cycle(self) -> dict[str, Any]:
         candidates = self._eligible_candidates()
+        candidate_count = len(candidates)
         portfolio = allocate(candidates, max_positions=self.max_positions)
+        selected_count = len(portfolio)
 
-        if not portfolio:
+        if selected_count <= 0:
+            failure_reason = self._selection_failure_reason(candidate_count, selected_count)
+
             empty_execution = {
                 "mode": "paper" if not self.live else "live",
                 "requested_orders": 0,
@@ -96,16 +109,17 @@ class Version9Daemon:
 
             cycle = {
                 "timestamp": datetime.now(UTC).isoformat(),
+                "candidate_count": candidate_count,
+                "selected_count": selected_count,
                 "portfolio": [],
-                "candidate_count": len(candidates),
                 "execution": empty_execution,
                 "risk": {
                     "approved": False,
-                    "reason": "no_candidate_allocations",
+                    "reason": failure_reason,
                 },
                 "execution_signal": {
                     "approved": False,
-                    "reason": "no_candidate_allocations",
+                    "reason": failure_reason,
                     "fill_rate": 0.0,
                     "filled_orders": 0,
                     "rejected_orders": 0,
@@ -116,7 +130,7 @@ class Version9Daemon:
 
             append_cycle(cycle)
             append_execution(empty_execution)
-            append_risk_event({"approved": False, "reason": "no_candidate_allocations"})
+            append_risk_event({"approved": False, "reason": failure_reason})
             return cycle
 
         execution = execute_allocations(portfolio, capital=self.capital, live=self.live)
@@ -177,6 +191,8 @@ class Version9Daemon:
 
         cycle = {
             "timestamp": datetime.now(UTC).isoformat(),
+            "candidate_count": candidate_count,
+            "selected_count": selected_count,
             "portfolio": portfolio,
             "execution": execution.as_dict(),
             "risk": risk_state.as_dict(),
