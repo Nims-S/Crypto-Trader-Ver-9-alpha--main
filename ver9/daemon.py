@@ -40,22 +40,32 @@ class Version9Daemon:
         self.risk_monitor = RiskMonitor()
         self.running = False
 
-    def _eligible_candidates(self) -> list[dict[str, Any]]:
-        candidates = list_candidates(status="deployable")
-        if not candidates:
-            candidates = list_candidates(status="probationary")
-        if not candidates:
-            candidates = list_candidates(status="validated")
+    def _candidate_source_counts(self) -> dict[str, int]:
+        return {
+            "deployable": len(list_candidates(status="deployable")),
+            "probationary": len(list_candidates(status="probationary")),
+            "validated": len(list_candidates(status="validated")),
+        }
 
-        filtered: list[dict[str, Any]] = []
-        for row in candidates:
-            strategy_id = str(row.get("strategy_id") or "")
-            if not strategy_id:
-                continue
-            if row.get("status") == "retired":
-                continue
-            filtered.append(row)
-        return filtered
+    def _eligible_candidates(self) -> tuple[list[dict[str, Any]], dict[str, int], str]:
+        source_counts = self._candidate_source_counts()
+        selection_reason = "deployable"
+
+        for status in ("deployable", "probationary", "validated"):
+            candidates = list_candidates(status=status)
+            filtered: list[dict[str, Any]] = []
+            for row in candidates:
+                strategy_id = str(row.get("strategy_id") or "")
+                if not strategy_id:
+                    continue
+                if row.get("status") == "retired":
+                    continue
+                filtered.append(row)
+            if filtered:
+                selection_reason = status
+                return filtered, source_counts, selection_reason
+
+        return [], source_counts, "no_candidates"
 
     def _execution_signal(self, execution: Any) -> tuple[bool, str, float]:
         fill_rate = float(getattr(execution, "fill_rate", 0.0) or 0.0)
@@ -72,21 +82,26 @@ class Version9Daemon:
 
     def _selection_failure_reason(self, candidate_count: int, selected_count: int) -> str:
         if candidate_count <= 0:
-            return "no_eligible_candidates"
+            return "no_candidates"
         if selected_count <= 0:
-            return "insufficient_selected_candidates"
+            return "selection_starved"
         if selected_count < self.max_positions:
-            return "insufficient_selected_candidates"
+            return "selection_starved"
         return "selection_complete"
 
     def build_cycle(self) -> dict[str, Any]:
-        candidates = self._eligible_candidates()
+        candidates, source_counts, selection_reason = self._eligible_candidates()
         candidate_count = len(candidates)
-        portfolio = allocate(candidates, max_positions=self.max_positions)
+        effective_min_positions = 1 if candidate_count < 2 else 2
+        portfolio = allocate(candidates, max_positions=self.max_positions, min_positions=effective_min_positions)
         selected_count = len(portfolio)
 
         if selected_count <= 0:
             failure_reason = self._selection_failure_reason(candidate_count, selected_count)
+            if failure_reason == "no_candidates":
+                failure_reason = "no_candidates"
+            else:
+                failure_reason = "selection_starved"
 
             empty_execution = {
                 "mode": "paper" if not self.live else "live",
@@ -110,7 +125,9 @@ class Version9Daemon:
             cycle = {
                 "timestamp": datetime.now(UTC).isoformat(),
                 "candidate_count": candidate_count,
+                "candidate_source_counts": source_counts,
                 "selected_count": selected_count,
+                "selection_reason": selection_reason if candidate_count > 0 else failure_reason,
                 "portfolio": [],
                 "execution": empty_execution,
                 "risk": {
@@ -192,7 +209,9 @@ class Version9Daemon:
         cycle = {
             "timestamp": datetime.now(UTC).isoformat(),
             "candidate_count": candidate_count,
+            "candidate_source_counts": source_counts,
             "selected_count": selected_count,
+            "selection_reason": selection_reason,
             "portfolio": portfolio,
             "execution": execution.as_dict(),
             "risk": risk_state.as_dict(),
