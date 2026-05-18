@@ -22,10 +22,11 @@ REGIME_MULTIPLIERS = {
     "adaptive": 1.0,
 }
 
-DEFAULT_MAX_STRATEGY_WEIGHT = 0.30
-DEFAULT_MAX_SYMBOL_WEIGHT = 0.40
-DEFAULT_MAX_FAMILY_WEIGHT = 0.45
-DEFAULT_CORRELATION_PENALTY_SCALE = 0.25
+DEFAULT_MAX_STRATEGY_WEIGHT = 0.35
+DEFAULT_MAX_SYMBOL_WEIGHT = 0.60
+DEFAULT_MAX_FAMILY_WEIGHT = 0.55
+DEFAULT_CORRELATION_PENALTY_SCALE = 0.18
+DEFAULT_MIN_CAP_FLOOR = 0.12
 
 
 def _to_float(value: Any, default: float = 0.0) -> float:
@@ -130,6 +131,7 @@ class BasketOptimizer:
         max_symbol_weight: float = DEFAULT_MAX_SYMBOL_WEIGHT,
         max_family_weight: float = DEFAULT_MAX_FAMILY_WEIGHT,
         correlation_penalty_scale: float = DEFAULT_CORRELATION_PENALTY_SCALE,
+        min_cap_floor: float = DEFAULT_MIN_CAP_FLOOR,
     ) -> None:
         self.max_positions = max(1, int(max_positions))
         self.min_positions = max(1, int(min_positions))
@@ -141,6 +143,7 @@ class BasketOptimizer:
         self.max_symbol_weight = max(0.0, min(1.0, float(max_symbol_weight)))
         self.max_family_weight = max(0.0, min(1.0, float(max_family_weight)))
         self.correlation_penalty_scale = max(0.0, float(correlation_penalty_scale))
+        self.min_cap_floor = max(0.0, min(1.0, float(min_cap_floor)))
 
     def candidate_score(self, candidate: dict[str, Any]) -> float:
         pf = max(_to_float(candidate.get("profit_factor"), 0.0), 0.0)
@@ -200,14 +203,14 @@ class BasketOptimizer:
             selected_corr = abs(_to_float(row.get("correlation_hint"), 0.0))
 
             if candidate_symbol == selected_symbol:
-                penalty += 1.75
+                penalty += 1.35
             if candidate_family == selected_family:
-                penalty += 0.55
+                penalty += 0.40
             if candidate_regime == selected_regime:
-                penalty += 0.30
+                penalty += 0.20
             if candidate_timeframe == selected_timeframe:
                 penalty += 0.10
-            penalty += (candidate_corr * 0.25) + (selected_corr * 0.15)
+            penalty += (candidate_corr * 0.18) + (selected_corr * 0.10)
 
         return round(penalty, 6)
 
@@ -222,13 +225,13 @@ class BasketOptimizer:
         candidate_timeframe = str(candidate.get("timeframe") or "unknown").lower()
 
         if candidate_symbol not in {_symbol_root(str(row.get("symbol") or "")) for row in selected}:
-            bonus += 0.35
+            bonus += 0.25
         if candidate_family not in {str(row.get("family") or "unknown").lower() for row in selected}:
-            bonus += 0.15
+            bonus += 0.12
         if candidate_regime not in {str(row.get("regime") or "adaptive").lower() for row in selected}:
-            bonus += 0.10
+            bonus += 0.08
         if candidate_timeframe not in {str(row.get("timeframe") or "unknown").lower() for row in selected}:
-            bonus += 0.05
+            bonus += 0.04
         return round(bonus, 6)
 
     def _is_eligible(self, candidate: dict[str, Any]) -> bool:
@@ -252,7 +255,8 @@ class BasketOptimizer:
             capital_multiplier = max(0.0, min(1.0, _to_float(row.get("capital_multiplier"), 1.0)))
             symbol_cap = self.max_symbol_weight / max(1, symbol_counts.get(symbol, 1))
             family_cap = self.max_family_weight / max(1, family_counts.get(family, 1))
-            caps[strategy_id] = min(self.max_strategy_weight, symbol_cap, family_cap) * capital_multiplier
+            raw_cap = min(self.max_strategy_weight, symbol_cap, family_cap)
+            caps[strategy_id] = max(self.min_cap_floor, raw_cap) * capital_multiplier
         return caps
 
     def _build_weights(self, selected: list[dict[str, Any]]) -> tuple[dict[str, float], dict[str, Any]]:
@@ -284,12 +288,10 @@ class BasketOptimizer:
             room_total = 0.0
             room_map: dict[str, float] = {}
             family_totals: dict[str, float] = Counter()
-            symbol_totals: dict[str, float] = Counter()
 
             for strategy_id, current_weight in list(weights.items()):
                 row = selected_lookup.get(strategy_id, {})
                 family = str(row.get("family") or "unknown").lower()
-                symbol = _symbol_root(str(row.get("symbol") or ""))
                 cap = caps.get(strategy_id, self.max_strategy_weight)
                 clipped = min(current_weight, cap)
                 excess += current_weight - clipped
@@ -298,11 +300,11 @@ class BasketOptimizer:
                 room_total += room
                 weights[strategy_id] = clipped
                 family_totals[family] += clipped
-                symbol_totals[symbol] += clipped
 
             for family, total in list(family_totals.items()):
-                if total > family_caps.get(family, self.max_family_weight):
-                    overflow = total - family_caps[family]
+                family_cap = family_caps.get(family, self.max_family_weight)
+                if total > family_cap:
+                    overflow = total - family_cap
                     excess += overflow
                     shared = [sid for sid, row in selected_lookup.items() if str(row.get("family") or "unknown").lower() == family]
                     if shared:
