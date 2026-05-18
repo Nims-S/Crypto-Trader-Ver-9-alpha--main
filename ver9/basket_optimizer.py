@@ -22,11 +22,11 @@ REGIME_MULTIPLIERS = {
     "adaptive": 1.0,
 }
 
-DEFAULT_MAX_STRATEGY_WEIGHT = 0.35
-DEFAULT_MAX_SYMBOL_WEIGHT = 0.60
-DEFAULT_MAX_FAMILY_WEIGHT = 0.55
-DEFAULT_CORRELATION_PENALTY_SCALE = 0.18
-DEFAULT_MIN_CAP_FLOOR = 0.12
+DEFAULT_MAX_STRATEGY_WEIGHT = 0.40
+DEFAULT_MAX_SYMBOL_WEIGHT = 0.70
+DEFAULT_MAX_FAMILY_WEIGHT = 0.65
+DEFAULT_CORRELATION_PENALTY_SCALE = 0.14
+DEFAULT_MIN_CAP_FLOOR = 0.18
 
 
 def _to_float(value: Any, default: float = 0.0) -> float:
@@ -203,14 +203,14 @@ class BasketOptimizer:
             selected_corr = abs(_to_float(row.get("correlation_hint"), 0.0))
 
             if candidate_symbol == selected_symbol:
-                penalty += 1.35
+                penalty += 1.18
             if candidate_family == selected_family:
-                penalty += 0.40
+                penalty += 0.32
             if candidate_regime == selected_regime:
-                penalty += 0.20
+                penalty += 0.16
             if candidate_timeframe == selected_timeframe:
-                penalty += 0.10
-            penalty += (candidate_corr * 0.18) + (selected_corr * 0.10)
+                penalty += 0.08
+            penalty += (candidate_corr * 0.14) + (selected_corr * 0.08)
 
         return round(penalty, 6)
 
@@ -225,13 +225,13 @@ class BasketOptimizer:
         candidate_timeframe = str(candidate.get("timeframe") or "unknown").lower()
 
         if candidate_symbol not in {_symbol_root(str(row.get("symbol") or "")) for row in selected}:
-            bonus += 0.25
+            bonus += 0.18
         if candidate_family not in {str(row.get("family") or "unknown").lower() for row in selected}:
-            bonus += 0.12
+            bonus += 0.10
         if candidate_regime not in {str(row.get("regime") or "adaptive").lower() for row in selected}:
-            bonus += 0.08
+            bonus += 0.06
         if candidate_timeframe not in {str(row.get("timeframe") or "unknown").lower() for row in selected}:
-            bonus += 0.04
+            bonus += 0.03
         return round(bonus, 6)
 
     def _is_eligible(self, candidate: dict[str, Any]) -> bool:
