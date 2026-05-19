@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
+
+from .models import LifecycleTransition
 
 VALID_TRANSITIONS = {
     "candidate": {"validated", "quarantined"},
@@ -25,12 +28,30 @@ MIN_BASKET_DIVERSITY = 1.0
 MIN_BASKET_DIVERSITY_DEPLOYABLE = 1.15
 
 
+class LifecycleError(RuntimeError):
+    pass
+
+
+
 def normalize_status(status: str) -> str:
     return status.strip().lower()
 
 
-class LifecycleError(RuntimeError):
-    pass
+
+def build_transition_record(
+    strategy_id: str,
+    from_status: str,
+    to_status: str,
+    reason: str,
+) -> LifecycleTransition:
+    return LifecycleTransition(
+        strategy_id=strategy_id,
+        from_status=normalize_status(from_status),
+        to_status=normalize_status(to_status),
+        reason=reason,
+        timestamp=datetime.now(UTC),
+    )
+
 
 
 def transition(record: dict[str, Any], target_status: str) -> dict[str, Any]:
@@ -38,12 +59,28 @@ def transition(record: dict[str, Any], target_status: str) -> dict[str, Any]:
     target = normalize_status(target_status)
 
     allowed = VALID_TRANSITIONS.get(current, set())
+
     if target not in allowed:
         raise LifecycleError(f"invalid transition: {current} -> {target}")
 
     updated = dict(record)
     updated["status"] = target
+
+    transition_history = list(updated.get("transition_history") or [])
+
+    transition_history.append(
+        build_transition_record(
+            strategy_id=str(updated.get("strategy_id") or ""),
+            from_status=current,
+            to_status=target,
+            reason="manual_transition",
+        )
+    )
+
+    updated["transition_history"] = transition_history
+
     return updated
+
 
 
 def _as_float(value: Any, default: float = 0.0) -> float:
@@ -70,39 +107,73 @@ def _symbol_root(symbol: str) -> str:
 
 def _basket_context(record: dict[str, Any], basket_context: dict[str, Any] | None) -> dict[str, Any]:
     context = dict(basket_context or {})
+
     context.setdefault("selected_count", _as_int(context.get("selected_count"), 0))
     context.setdefault("max_positions", _as_int(context.get("max_positions"), 0))
     context.setdefault("diversity_score", _as_float(context.get("diversity_score"), 0.0))
     context.setdefault("symbol_counts", context.get("symbol_counts") or {})
     context.setdefault("family_counts", context.get("family_counts") or {})
     context.setdefault("regime_counts", context.get("regime_counts") or {})
-    context["candidate_symbol_root"] = _symbol_root(str(record.get("symbol") or ""))
-    context["candidate_family"] = str(record.get("family") or "unknown").lower()
-    context["candidate_regime"] = str(record.get("regime") or "adaptive").lower()
+
+    context["candidate_symbol_root"] = _symbol_root(
+        str(record.get("symbol") or "")
+    )
+
+    context["candidate_family"] = str(
+        record.get("family") or "unknown"
+    ).lower()
+
+    context["candidate_regime"] = str(
+        record.get("regime") or "adaptive"
+    ).lower()
+
     return context
 
 
 
-def _basket_novelty_score(record: dict[str, Any], basket_context: dict[str, Any] | None = None) -> float:
+def _basket_novelty_score(
+    record: dict[str, Any],
+    basket_context: dict[str, Any] | None = None,
+) -> float:
     context = _basket_context(record, basket_context)
-    selected_symbols = {str(key).upper() for key in (context.get("symbol_counts") or {}).keys()}
-    selected_families = {str(key).lower() for key in (context.get("family_counts") or {}).keys()}
-    selected_regimes = {str(key).lower() for key in (context.get("regime_counts") or {}).keys()}
+
+    selected_symbols = {
+        str(key).upper()
+        for key in (context.get("symbol_counts") or {}).keys()
+    }
+
+    selected_families = {
+        str(key).lower()
+        for key in (context.get("family_counts") or {}).keys()
+    }
+
+    selected_regimes = {
+        str(key).lower()
+        for key in (context.get("regime_counts") or {}).keys()
+    }
 
     novelty = 0.0
+
     if context["candidate_symbol_root"] not in selected_symbols:
         novelty += 0.4
+
     if context["candidate_family"] not in selected_families:
         novelty += 0.2
+
     if context["candidate_regime"] not in selected_regimes:
         novelty += 0.1
+
     if context["diversity_score"] >= MIN_BASKET_DIVERSITY:
         novelty += 0.1
+
     return round(novelty, 4)
 
 
 
-def can_enter_probationary_basket(record: dict[str, Any], basket_context: dict[str, Any] | None = None) -> bool:
+def can_enter_probationary_basket(
+    record: dict[str, Any],
+    basket_context: dict[str, Any] | None = None,
+) -> bool:
     if normalize_status(str(record.get("status") or "candidate")) == "quarantined":
         return False
 
@@ -114,14 +185,18 @@ def can_enter_probationary_basket(record: dict[str, Any], basket_context: dict[s
 
     if not validation_passed and validation_score < MIN_VALIDATION_SCORE:
         return False
+
     if robustness < MIN_ROBUSTNESS_PROBATIONARY:
         return False
+
     if profit_factor < MIN_PROFIT_FACTOR_PROBATIONARY:
         return False
+
     if drawdown < MAX_DRAWDOWN_PROBATIONARY:
         return False
 
     context = _basket_context(record, basket_context)
+
     if context["selected_count"] == 0:
         return True
 
@@ -129,7 +204,10 @@ def can_enter_probationary_basket(record: dict[str, Any], basket_context: dict[s
 
 
 
-def can_enter_deployable_basket(record: dict[str, Any], basket_context: dict[str, Any] | None = None) -> bool:
+def can_enter_deployable_basket(
+    record: dict[str, Any],
+    basket_context: dict[str, Any] | None = None,
+) -> bool:
     robustness = _as_float(record.get("robustness_score"), 0.0)
     profit_factor = _as_float(record.get("profit_factor"), 0.0)
     drawdown = _as_float(record.get("max_drawdown_pct"), 0.0)
@@ -138,14 +216,18 @@ def can_enter_deployable_basket(record: dict[str, Any], basket_context: dict[str
 
     if not validation_passed and validation_score < MIN_VALIDATION_SCORE:
         return False
+
     if robustness < MIN_ROBUSTNESS_DEPLOYABLE:
         return False
+
     if profit_factor < MIN_PROFIT_FACTOR_DEPLOYABLE:
         return False
+
     if drawdown < MAX_DRAWDOWN_DEPLOYABLE:
         return False
 
     context = _basket_context(record, basket_context)
+
     if context["selected_count"] == 0:
         return True
 
@@ -156,9 +238,16 @@ def can_enter_deployable_basket(record: dict[str, Any], basket_context: dict[str
 
 
 
-def auto_promote(record: dict[str, Any], basket_context: dict[str, Any] | None = None) -> dict[str, Any]:
+def auto_promote(
+    record: dict[str, Any],
+    basket_context: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     updated = dict(record)
-    current_status = normalize_status(str(updated.get("status") or "candidate"))
+
+    current_status = normalize_status(
+        str(updated.get("status") or "candidate")
+    )
+
     if current_status in {"live", "quarantined"}:
         return updated
 
@@ -170,7 +259,13 @@ def auto_promote(record: dict[str, Any], basket_context: dict[str, Any] | None =
 
     basket_ready = _basket_context(updated, basket_context)
 
-    if validation_passed and validation_score >= MIN_VALIDATION_SCORE and robustness >= MIN_ROBUSTNESS_VALIDATED and profit_factor >= MIN_PROFIT_FACTOR_VALIDATED and drawdown >= MAX_DRAWDOWN_VALIDATED:
+    if (
+        validation_passed
+        and validation_score >= MIN_VALIDATION_SCORE
+        and robustness >= MIN_ROBUSTNESS_VALIDATED
+        and profit_factor >= MIN_PROFIT_FACTOR_VALIDATED
+        and drawdown >= MAX_DRAWDOWN_VALIDATED
+    ):
         updated["status"] = "validated"
 
     if can_enter_probationary_basket(updated, basket_ready):
