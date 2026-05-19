@@ -1,8 +1,9 @@
 # Crypto-Trader-Ver-9-alpha
 
-Ver9 is transitioning from a synthetic strategy research shell into a real quantitative research and portfolio experimentation platform.
+Ver9 is transitioning from a synthetic strategy research shell into a real quantitative research, runtime orchestration, and portfolio experimentation platform.
 
 The project now contains:
+
 - real market data ingestion
 - real strategy execution
 - real backtesting
@@ -11,11 +12,18 @@ The project now contains:
 - experiment tracking
 - regime classification
 - typed runtime infrastructure
+- event-driven runtime foundations
+- exchange connectivity scaffolding
+- runtime supervision infrastructure
 
 It is NOT yet a production trading system.
 
 The current focus is:
-building reliable research infrastructure before autonomous optimization.
+
+```text
+building reliable research + runtime infrastructure
+before autonomous optimization
+```
 
 ---
 
@@ -36,6 +44,97 @@ Implemented:
 - Experiment tracking
 - Experiment ranking
 - Regime-aware strategy routing
+- Typed event models
+- Runtime state persistence
+- Runtime supervision layers
+
+---
+
+### Runtime Orchestration Infrastructure
+
+Implemented:
+
+```text
+ver9/runtime/
+```
+
+Capabilities:
+
+- runtime state synchronization
+- runtime supervision
+- runtime metrics tracking
+- runtime latency observation
+- runtime persistence
+- event-driven coordination primitives
+- runtime escalation classification
+- operational telemetry
+- runtime lifecycle visibility
+
+Current runtime architecture includes:
+
+```text
+runtime/
+├── events/
+├── exchanges/
+├── market/
+├── runtime_metrics_layer.py
+├── runtime_supervision_layer.py
+├── state_models.py
+└── state_store.py
+```
+
+Current status model:
+
+```text
+ACTIVE
+→ WARNING
+→ HALTED
+```
+
+based on rolling runtime conditions.
+
+---
+
+### Event-Driven Runtime Architecture
+
+Implemented:
+
+```text
+ver9/runtime/events/
+```
+
+Capabilities:
+
+- typed runtime events
+- event queues
+- publish/subscribe coordination
+- runtime dispatching
+- event journaling
+- deterministic replay foundations
+- runtime message propagation
+- decoupled orchestration
+
+Current components:
+
+```text
+models.py
+message_bus.py
+dispatcher.py
+event_log.py
+queue_models.py
+```
+
+This architecture is intended to replace:
+
+```text
+cross-module orchestration coupling
+```
+
+with:
+
+```text
+message-driven runtime coordination
+```
 
 ---
 
@@ -70,6 +169,91 @@ Capabilities:
 
 ---
 
+### Runtime Market Infrastructure
+
+Implemented:
+
+```text
+ver9/runtime/market/
+```
+
+Capabilities:
+
+- streaming tick models
+- incremental candle aggregation
+- runtime market snapshots
+- live market-state coordination
+- rolling OHLCV updates
+- event-compatible market payloads
+
+Current components:
+
+```text
+ticks.py
+candles.py
+aggregator.py
+snapshot_store.py
+```
+
+This is foundational for:
+
+- live signal generation
+- streaming runtime orchestration
+- event-driven strategy execution
+
+---
+
+### Exchange Connectivity Infrastructure
+
+Implemented:
+
+```text
+ver9/runtime/exchanges/
+```
+
+Capabilities:
+
+- exchange adapter abstraction
+- ticker normalization
+- venue abstraction mapping
+- exchange connection state tracking
+- account state tracking
+- position synchronization models
+- reconnect orchestration scaffolding
+- heartbeat supervision scaffolding
+- rate-limit protection
+
+Current adapter layer:
+
+```text
+adapters/
+├── base_adapter.py
+├── binance_adapter.py
+├── bybit_adapter.py
+├── bitunix_adapter.py
+└── rate_limit_state.py
+```
+
+Current normalization layer:
+
+```text
+ticker_normalizer.py
+```
+
+Current exchange layer is:
+
+```text
+exchange-aware
+```
+
+but NOT yet:
+
+```text
+fully live-connected
+```
+
+---
+
 ### Real Strategy Framework
 
 Implemented:
@@ -83,6 +267,7 @@ Current strategies:
 #### SMA Cross Baseline
 
 Purpose:
+
 - benchmark strategy
 - regression sanity check
 - trend-following baseline
@@ -100,6 +285,7 @@ Current implementation includes:
 - anti-leakage future labeling
 
 Important:
+
 This is a research hypothesis engine.
 Not validated alpha.
 
@@ -153,6 +339,7 @@ Capabilities:
 - atomic save semantics
 
 This is the foundation for future:
+
 - hyperparameter optimization
 - distributed research
 - meta-learning
@@ -202,7 +389,11 @@ quota_tuner.py
 These systems are NOT currently trusted as real alpha research.
 
 The migration strategy is:
-replace synthetic evaluation with real data-driven research incrementally.
+
+```text
+replace synthetic evaluation
+with real data-driven research incrementally
+```
 
 ---
 
@@ -212,6 +403,7 @@ The current roadmap prioritizes:
 
 ```text
 research correctness
+→ runtime reliability
 → reproducibility
 → risk realism
 → adaptive governance
@@ -232,6 +424,17 @@ Ver9 is still NOT production-grade.
 
 Missing or incomplete:
 
+- actual websocket streaming
+- authenticated exchange sessions
+- live order execution
+- orderbook ingestion
+- exchange reconciliation loops
+- stale-stream detection
+- async runtime orchestration
+- distributed workers
+- durable queues
+- dead-letter handling
+- replay recovery sequencing
 - realistic order book simulation
 - spread dynamics
 - partial fills
@@ -239,14 +442,11 @@ Missing or incomplete:
 - leverage/liquidation simulation
 - market impact modeling
 - correlation shock modeling
-- latency simulation
 - deterministic experiment seeds
 - feature store/versioning
 - benchmark governance
 - survivorship-bias controls
-- true out-of-sample orchestration
-- exchange reconciliation
-- production execution daemon hardening
+- institutional-grade execution hardening
 
 Current execution assumptions are still optimistic.
 
@@ -259,9 +459,9 @@ The objective is NOT to create an "AI trading bot" quickly.
 The objective is:
 
 ```text
-build a disciplined adaptive research platform
+build a disciplined adaptive research + runtime platform
 that can safely evolve toward autonomous portfolio management
-without uncontrolled overfitting.
+without uncontrolled overfitting
 ```
 
 That requires:
@@ -272,6 +472,9 @@ That requires:
 - realistic validation
 - strict leakage prevention
 - capital-aware portfolio simulation
+- runtime reliability
+- exchange-state synchronization
+- operational supervision
 
 before:
 
@@ -286,6 +489,12 @@ before:
 
 ```text
 ver9/
+├── daemon/
+├── execution/
+├── lifecycle/
+├── portfolio/
+├── registry/
+│
 ├── research/
 │   ├── backtesting/
 │   ├── data/
@@ -295,11 +504,12 @@ ver9/
 │   ├── validation/
 │   └── examples/
 │
-├── daemon/
-├── execution/
-├── lifecycle/
-├── portfolio/
-└── registry/
+└── runtime/
+    ├── events/
+    ├── exchanges/
+    ├── market/
+    ├── orchestration/
+    └── supervision/
 ```
 
 ---
@@ -308,16 +518,19 @@ ver9/
 
 Highest-priority upcoming work:
 
-1. Feature infrastructure
-2. Leakage-resistant feature pipelines
-3. Feature lineage/versioning
-4. Better execution realism
-5. Portfolio covariance/risk modeling
-6. Robust out-of-sample governance
-7. Live paper-trading integration
-8. Exchange reconciliation layer
-9. Adaptive portfolio weighting
-10. Safer evolutionary research replacement
+1. Async websocket runtime
+2. Live exchange stream ingestion
+3. Authenticated account synchronization
+4. Exchange reconciliation loops
+5. Event replay recovery
+6. Async runtime orchestration
+7. Durable queue infrastructure
+8. Incremental feature engine
+9. Leakage-resistant feature pipelines
+10. Portfolio covariance/risk modeling
+11. Live paper-trading integration
+12. Adaptive portfolio weighting
+13. Safer evolutionary research replacement
 
 ---
 
@@ -326,7 +539,8 @@ Highest-priority upcoming work:
 Ver9 is now:
 
 ```text
-a legitimate early-stage quantitative research platform
+a legitimate early-stage quantitative research
+and runtime orchestration platform
 ```
 
 It is no longer:
@@ -341,4 +555,14 @@ But it is also NOT yet:
 a deployable institutional trading system
 ```
 
-The project is currently in the transition phase between those two states.
+The project is currently transitioning from:
+
+```text
+research framework
+```
+
+into:
+
+```text
+real autonomous trading runtime infrastructure
+```
