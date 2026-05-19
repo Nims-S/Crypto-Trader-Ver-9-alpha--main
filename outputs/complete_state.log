@@ -1,46 +1,67 @@
 ===== RUN START =====
-Timestamp: 18/05/2026 12:07:23.07
+Timestamp: 19/05/2026 15:40:41.43
 WorkingDir: C:\Users\Nimesh\Documents\Bot Projects\Crypto-Trader-Ver-9-alpha--main
 
 ----- pytest -----
-Command: python -m pytest tests -v
+Command: python -m pytest tests -v --tb=short
 ============================= test session starts =============================
 platform win32 -- Python 3.14.4, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\Nimesh\AppData\Local\Python\pythoncore-3.14-64\python.exe
 cachedir: .pytest_cache
 rootdir: C:\Users\Nimesh\Documents\Bot Projects\Crypto-Trader-Ver-9-alpha--main
 plugins: anyio-4.13.0
-collecting ... collected 27 items
+collecting ... collected 31 items
 
 tests/test_basket_optimizer.py::test_probationary_basket_builds_when_soft_fill_enabled PASSED [  3%]
-tests/test_basket_optimizer.py::test_strict_basket_can_reject_small_pool PASSED [  7%]
-tests/test_basket_optimizer.py::test_basket_summary_reports_diversity PASSED [ 11%]
-tests/test_basket_optimizer.py::test_diversity_score_rewards_multi_symbol_mix PASSED [ 14%]
-tests/test_cli_integration.py::test_generation_quota_command_starts PASSED [ 18%]
-tests/test_distributed_workers.py::TestDistributedWorker::test_worker_isolates_batch_failures PASSED [ 22%]
-tests/test_distributed_workers.py::TestDistributedWorker::test_coordinator_runs_and_builds_portfolio PASSED [ 25%]
-tests/test_generation.py::test_generation_plan_builds_rows PASSED        [ 29%]
-tests/test_generation.py::test_generate_candidates_respects_custom_family_quota PASSED [ 33%]
-tests/test_generation.py::test_generate_candidates_respects_symbol_quota PASSED [ 37%]
-tests/test_generation.py::test_generation_quota_report_has_totals PASSED [ 40%]
-tests/test_lifecycle.py::test_probationary_requires_quality_thresholds PASSED [ 44%]
-tests/test_lifecycle.py::test_deployable_requires_stronger_thresholds PASSED [ 48%]
-tests/test_lifecycle.py::test_auto_promote_prefers_diverse_additions PASSED [ 51%]
-tests/test_lifecycle.py::test_auto_promote_rejects_weak_candidate PASSED [ 55%]
-tests/test_quota_tuner.py::test_infer_regime_detects_mean_reversion_bias PASSED [ 59%]
-tests/test_quota_tuner.py::test_family_quota_tuning_boosts_regime_family PASSED [ 62%]
-tests/test_quota_tuner.py::test_regime_quota_plan_builds_rows PASSED     [ 66%]
-tests/test_quota_tuner.py::test_generation_report_exposes_adaptive_regime PASSED [ 70%]
-tests/test_quota_tuner.py::test_generate_candidates_embeds_regime PASSED [ 74%]
-tests/test_quota_tuner.py::test_regime_quota_report_has_plan PASSED      [ 77%]
-tests/test_registry.py::test_registry_recovers_from_trailing_corruption PASSED [ 81%]
-tests/test_registry.py::test_registry_recovers_from_invalid_json PASSED  [ 85%]
-tests/test_registry.py::test_registry_atomic_save PASSED                 [ 88%]
-tests/test_state_machine.py::test_quarantine_trigger PASSED              [ 92%]
+tests/test_basket_optimizer.py::test_strict_basket_can_reject_small_pool PASSED [  6%]
+tests/test_basket_optimizer.py::test_basket_summary_reports_diversity PASSED [  9%]
+tests/test_basket_optimizer.py::test_diversity_score_rewards_multi_symbol_mix PASSED [ 12%]
+tests/test_cli_integration.py::test_generation_quota_command_starts PASSED [ 16%]
+tests/test_distributed_workers.py::TestDistributedWorker::test_worker_isolates_batch_failures PASSED [ 19%]
+tests/test_distributed_workers.py::TestDistributedWorker::test_coordinator_runs_and_builds_portfolio PASSED [ 22%]
+tests/test_generation.py::test_generation_plan_builds_rows PASSED        [ 25%]
+tests/test_generation.py::test_generate_candidates_respects_custom_family_quota PASSED [ 29%]
+tests/test_generation.py::test_generate_candidates_respects_symbol_quota PASSED [ 32%]
+tests/test_generation.py::test_generation_quota_report_has_totals PASSED [ 35%]
+tests/test_lifecycle.py::test_probationary_requires_quality_thresholds PASSED [ 38%]
+tests/test_lifecycle.py::test_deployable_requires_stronger_thresholds PASSED [ 41%]
+tests/test_lifecycle.py::test_auto_promote_prefers_diverse_additions PASSED [ 45%]
+tests/test_lifecycle.py::test_auto_promote_rejects_weak_candidate PASSED [ 48%]
+tests/test_quota_tuner.py::test_infer_regime_detects_mean_reversion_bias PASSED [ 51%]
+tests/test_quota_tuner.py::test_family_quota_tuning_boosts_regime_family PASSED [ 54%]
+tests/test_quota_tuner.py::test_regime_quota_plan_builds_rows PASSED     [ 58%]
+tests/test_quota_tuner.py::test_generation_report_exposes_adaptive_regime PASSED [ 61%]
+tests/test_quota_tuner.py::test_generate_candidates_embeds_regime PASSED [ 64%]
+tests/test_quota_tuner.py::test_regime_quota_report_has_plan PASSED      [ 67%]
+tests/test_registry.py::test_registry_recovers_from_trailing_corruption PASSED [ 70%]
+tests/test_registry.py::test_registry_recovers_from_invalid_json PASSED  [ 74%]
+tests/test_registry.py::test_registry_atomic_save PASSED                 [ 77%]
+tests/test_runtime_regressions.py::test_registry_recovery_preserves_entries_and_atomic_save PASSED [ 80%]
+tests/test_runtime_regressions.py::test_strict_basket_rejects_undersized_pool_and_reports_basket_size PASSED [ 83%]
+tests/test_runtime_regressions.py::test_recovery_cleanup_removes_quarantine_record PASSED [ 87%]
+tests/test_runtime_regressions.py::test_daemon_reports_thin_basket_and_selected_source FAILED [ 90%]
+tests/test_state_machine.py::test_quarantine_trigger PASSED              [ 93%]
 tests/test_state_machine.py::test_recovery_requires_multiple_cycles PASSED [ 96%]
 tests/test_state_machine.py::test_state_summary_counts PASSED            [100%]
 
-============================= 27 passed in 0.86s ==============================
-[exit_code=0]
+================================== FAILURES ===================================
+_____________ test_daemon_reports_thin_basket_and_selected_source _____________
+tests\test_runtime_regressions.py:185: in test_daemon_reports_thin_basket_and_selected_source
+    cycle = daemon.run_daemon_once(capital=10000.0, max_positions=3, live=False)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ver9\daemon.py:277: in run_daemon_once
+    return daemon.run_once()
+           ^^^^^^^^^^^^^^^^^
+ver9\daemon.py:251: in run_once
+    return self.build_cycle()
+           ^^^^^^^^^^^^^^^^^^
+ver9\daemon.py:167: in build_cycle
+    successful_orders = int(execution.filled_orders)
+                            ^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: '_FakeExecutionSummary' object has no attribute 'filled_orders'
+=========================== short test summary info ===========================
+FAILED tests/test_runtime_regressions.py::test_daemon_reports_thin_basket_and_selected_source
+======================== 1 failed, 30 passed in 2.52s =========================
+[exit_code=1]
 
 ----- generation-quota -----
 Command: python main.py generation-quota --iterations 5
@@ -112,29 +133,29 @@ Command: python main.py generation-quota --iterations 5
 ----- diversity -----
 Command: python main.py diversity
 {
-  "diversity_score": 0.6,
+  "diversity_score": 1.275,
   "family_counts": {
-    "mean_reversion": 8,
-    "trend": 6,
-    "volatility_compression": 3
+    "mean_reversion": 4,
+    "trend": 2,
+    "volatility_compression": 2
   },
   "regime_counts": {
-    "mean_reversion": 8,
-    "trend": 6,
-    "volatility_compression": 3
+    "mean_reversion": 4,
+    "trend": 2,
+    "volatility_compression": 2
   },
   "scope": "basket",
   "status_counts": {
-    "deployable": 3,
-    "probationary": 14
+    "deployable": 1,
+    "probationary": 7
   },
   "status_filter": null,
   "symbol_counts": {
-    "BTC": 6,
-    "ETH": 6,
-    "SOL": 5
+    "BTC": 2,
+    "ETH": 4,
+    "SOL": 2
   },
-  "total_candidates": 17,
+  "total_candidates": 8,
   "unique_families": 3,
   "unique_regimes": 3,
   "unique_symbols": 3
@@ -146,43 +167,43 @@ Command: python main.py evolve --iterations 20 --folds 4 --mc-iterations 300 --p
 {
   "allocation_telemetry": {
     "allocation_caps": {
-      "mean_reversion_sol_usdt_mean_reversion_2": 0.3,
-      "trend_eth_usdt_trend_1": 0.3,
-      "volatility_compression_btc_usdt_volatility_compression_2": 0.3
+      "mean_reversion_sol_usdt_mean_reversion_2": 0.4,
+      "trend_eth_usdt_trend_1": 0.4,
+      "volatility_compression_btc_usdt_volatility_compression_2": 0.4
     },
-    "cash_weight": 0.1,
+    "cash_weight": 0.0,
     "correlation_adjusted": true,
-    "covariance_penalty": 0.3,
+    "covariance_penalty": 0.24,
     "family_caps": {
-      "mean_reversion": 0.45,
-      "trend": 0.45,
-      "volatility_compression": 0.45
+      "mean_reversion": 0.65,
+      "trend": 0.65,
+      "volatility_compression": 0.65
     },
     "raw_weight_sum": 1.0,
-    "used_weight_sum": 0.9
+    "used_weight_sum": 1.0
   },
   "artifact": "artifacts\\cycle_alpha.json",
   "basket": {
     "allocation_telemetry": {
       "allocation_caps": {
-        "mean_reversion_sol_usdt_mean_reversion_2": 0.3,
-        "trend_eth_usdt_trend_1": 0.3,
-        "volatility_compression_btc_usdt_volatility_compression_2": 0.3
+        "mean_reversion_sol_usdt_mean_reversion_2": 0.4,
+        "trend_eth_usdt_trend_1": 0.4,
+        "volatility_compression_btc_usdt_volatility_compression_2": 0.4
       },
-      "cash_weight": 0.1,
+      "cash_weight": 0.0,
       "correlation_adjusted": true,
-      "covariance_penalty": 0.3,
+      "covariance_penalty": 0.24,
       "family_caps": {
-        "mean_reversion": 0.45,
-        "trend": 0.45,
-        "volatility_compression": 0.45
+        "mean_reversion": 0.65,
+        "trend": 0.65,
+        "volatility_compression": 0.65
       },
       "raw_weight_sum": 1.0,
-      "used_weight_sum": 0.9
+      "used_weight_sum": 1.0
     },
-    "basket_score": 2.605268,
+    "basket_score": 2.451935,
     "basket_size": 3,
-    "correlation_penalty": 0.3,
+    "correlation_penalty": 0.24,
     "diversity_score": 3.0,
     "max_positions": 3,
     "min_positions": 2,
@@ -305,7 +326,7 @@ Command: python main.py evolve --iterations 20 --folds 4 --mc-iterations 300 --p
         "walk_forward_score": 4.0533
       },
       {
-        "basket_score": 2.227827,
+        "basket_score": 1.987827,
         "candidate_score": 1.727827,
         "cross_symbol": {
           "mean_score": 0.6241,
@@ -318,7 +339,7 @@ Command: python main.py evolve --iterations 20 --folds 4 --mc-iterations 300 --p
           ]
         },
         "cross_symbol_score": 0.6241,
-        "diversity_bonus": 0.6,
+        "diversity_bonus": 0.34,
         "family": "mean_reversion",
         "max_drawdown_pct": -4.85,
         "monte_carlo": {
@@ -331,7 +352,7 @@ Command: python main.py evolve --iterations 20 --folds 4 --mc-iterations 300 --p
           "score": 4.9903
         },
         "monte_carlo_score": 4.9903,
-        "pair_penalty": 0.1,
+        "pair_penalty": 0.08,
         "parameter_strength": 7.731,
         "perturbation": {
           "mean_drawdown_pct": 4.9968,
@@ -415,7 +436,7 @@ Command: python main.py evolve --iterations 20 --folds 4 --mc-iterations 300 --p
         "walk_forward_score": 3.4425666666666666
       },
       {
-        "basket_score": 1.968683,
+        "basket_score": 1.748683,
         "candidate_score": 1.568683,
         "cross_symbol": {
           "mean_score": 0.753,
@@ -428,7 +449,7 @@ Command: python main.py evolve --iterations 20 --folds 4 --mc-iterations 300 --p
           ]
         },
         "cross_symbol_score": 0.753,
-        "diversity_bonus": 0.6,
+        "diversity_bonus": 0.34,
         "family": "trend",
         "max_drawdown_pct": -4.29,
         "monte_carlo": {
@@ -441,7 +462,7 @@ Command: python main.py evolve --iterations 20 --folds 4 --mc-iterations 300 --p
           "score": 5.2893
         },
         "monte_carlo_score": 5.2893,
-        "pair_penalty": 0.2,
+        "pair_penalty": 0.16,
         "parameter_strength": 14.438,
         "perturbation": {
           "mean_drawdown_pct": 4.4152,
@@ -526,9 +547,9 @@ Command: python main.py evolve --iterations 20 --folds 4 --mc-iterations 300 --p
       }
     ],
     "weights": {
-      "mean_reversion_sol_usdt_mean_reversion_2": 0.3,
-      "trend_eth_usdt_trend_1": 0.3,
-      "volatility_compression_btc_usdt_volatility_compression_2": 0.3
+      "mean_reversion_sol_usdt_mean_reversion_2": 0.3118248005638798,
+      "trend_eth_usdt_trend_1": 0.2881751994361201,
+      "volatility_compression_btc_usdt_volatility_compression_2": 0.4
     }
   },
   "diversity": {
@@ -562,8 +583,8 @@ Command: python main.py evolve --iterations 20 --folds 4 --mc-iterations 300 --p
   "generated": 31,
   "portfolio": [
     {
-      "allocation_pct": 0.3,
-      "allocation_weight": 0.3,
+      "allocation_pct": 0.4,
+      "allocation_weight": 0.4,
       "basket_score": 3.6193,
       "candidate_score": 3.4693,
       "family": "volatility_compression",
@@ -574,9 +595,9 @@ Command: python main.py evolve --iterations 20 --folds 4 --mc-iterations 300 --p
       "symbol": "BTC/USDT"
     },
     {
-      "allocation_pct": 0.3,
-      "allocation_weight": 0.3,
-      "basket_score": 2.2278,
+      "allocation_pct": 0.311825,
+      "allocation_weight": 0.311825,
+      "basket_score": 1.9878,
       "candidate_score": 1.7278,
       "family": "mean_reversion",
       "probationary": false,
@@ -586,9 +607,9 @@ Command: python main.py evolve --iterations 20 --folds 4 --mc-iterations 300 --p
       "symbol": "SOL/USDT"
     },
     {
-      "allocation_pct": 0.3,
-      "allocation_weight": 0.3,
-      "basket_score": 1.9687,
+      "allocation_pct": 0.288175,
+      "allocation_weight": 0.288175,
+      "basket_score": 1.7487,
       "candidate_score": 1.5687,
       "family": "trend",
       "probationary": false,
@@ -729,271 +750,21 @@ Command: python main.py evolve --iterations 20 --folds 4 --mc-iterations 300 --p
 Command: python main.py basket --status deployable
 {
   "allocation_telemetry": {
-    "allocation_caps": {
-      "mean_reversion_sol_usdt_0": 0.2,
-      "trend_sol_usdt_1": 0.2
-    },
-    "cash_weight": 0.6,
-    "correlation_adjusted": true,
-    "covariance_penalty": 4.55,
-    "family_caps": {
-      "mean_reversion": 0.45,
-      "trend": 0.45
-    },
-    "raw_weight_sum": 1.0,
-    "used_weight_sum": 0.4
+    "allocation_caps": {},
+    "cash_weight": 1.0,
+    "covariance_penalty": 0.0,
+    "family_caps": {}
   },
-  "basket_score": 11.07242,
-  "basket_size": 2,
-  "correlation_penalty": 4.55,
-  "diversity_score": 1.666667,
+  "basket_score": 0.0,
+  "basket_size": 0,
+  "correlation_penalty": 0.0,
+  "diversity_score": 0.0,
   "max_positions": 3,
   "min_positions": 2,
-  "probationary": false,
-  "rejected": [
-    {
-      "reason": "duplicate_symbol",
-      "strategy_id": "mean_reversion_sol_usdt_0"
-    },
-    {
-      "reason": "duplicate_strategy",
-      "strategy_id": "trend_sol_usdt_1"
-    }
-  ],
-  "selected": [
-    {
-      "basket_score": 10.760472,
-      "candidate_score": 13.460472,
-      "cross_symbol": {
-        "mean_score": 0.9206,
-        "passed": true,
-        "reasons": [],
-        "score_spread": 0.0189,
-        "symbols_tested": [
-          "BTC/USDT",
-          "ETH/USDT"
-        ]
-      },
-      "cross_symbol_score": 0.9206,
-      "diversity_bonus": 0.0,
-      "family": "trend",
-      "generation_version": "v9",
-      "legacy_strategy_id": "trend_sol_usdt_adaptive_1",
-      "max_drawdown_pct": -3.42,
-      "monte_carlo": {
-        "failure_rate": 0.0,
-        "iterations": 500,
-        "p05_return_pct": 13.9811,
-        "p50_return_pct": 14.1671,
-        "p95_drawdown_pct": 4.0642,
-        "passed": true,
-        "score": 7.5448
-      },
-      "monte_carlo_score": 7.545,
-      "pair_penalty": 2.7,
-      "parameter_strength": 14.438,
-      "perturbation": {
-        "mean_drawdown_pct": 3.5662,
-        "mean_return_pct": 9.6867,
-        "passed": true,
-        "stability_score": 1.6884,
-        "trials": 100
-      },
-      "perturbation_score": 1.6736,
-      "profit_factor": 2.22,
-      "regime": "trend",
-      "return_pct": 8.8,
-      "robustness_score": 7.5448,
-      "status": "deployable",
-      "strategy_epoch": 1,
-      "strategy_evidence": {
-        "cross_symbol_score": 0.9206,
-        "monte_carlo_score": 7.5448,
-        "perturbation_score": 1.6884,
-        "robustness_score": 0.898,
-        "walk_forward_score": 4.603466666666667
-      },
-      "strategy_id": "trend_sol_usdt_1",
-      "symbol": "SOL/USDT",
-      "timeframe": "1h",
-      "trades": 164,
-      "updated_at": "2026-05-16T06:36:22.968851+00:00",
-      "validation": {
-        "cross_symbol": {
-          "mean_score": 0.9206,
-          "passed": true,
-          "reasons": [],
-          "score_spread": 0.0189,
-          "symbols_tested": [
-            "BTC/USDT",
-            "ETH/USDT"
-          ]
-        },
-        "evidence": {
-          "cross_symbol_score": 0.9206,
-          "monte_carlo_score": 7.5448,
-          "perturbation_score": 1.6884,
-          "robustness_score": 0.898,
-          "walk_forward_score": 4.603466666666667
-        },
-        "monte_carlo": {
-          "failure_rate": 0.0,
-          "iterations": 500,
-          "p05_return_pct": 13.9811,
-          "p50_return_pct": 14.1671,
-          "p95_drawdown_pct": 4.0642,
-          "passed": true,
-          "score": 7.5448
-        },
-        "perturbation": {
-          "mean_drawdown_pct": 3.5662,
-          "mean_return_pct": 9.6867,
-          "passed": true,
-          "stability_score": 1.6884,
-          "trials": 100
-        },
-        "walk_forward": {
-          "fold_count": 4,
-          "passed": true,
-          "reasons": [],
-          "score_spread": 0.2061,
-          "test_mean": 4.378,
-          "train_mean": 4.8761,
-          "val_mean": 4.5563
-        }
-      },
-      "validation_passed": true,
-      "validation_score": 3.9916,
-      "walk_forward": {
-        "fold_count": 4,
-        "passed": true,
-        "reasons": [],
-        "score_spread": 0.2061,
-        "test_mean": 4.378,
-        "train_mean": 4.8761,
-        "val_mean": 4.5563
-      },
-      "walk_forward_score": 4.603466666666667
-    },
-    {
-      "basket_score": 11.384369,
-      "candidate_score": 12.984369,
-      "cross_symbol": {
-        "mean_score": 1.0,
-        "passed": true,
-        "reasons": [],
-        "score_spread": 0.0,
-        "symbols_tested": [
-          "BTC/USDT",
-          "ETH/USDT"
-        ]
-      },
-      "cross_symbol_score": 1.0,
-      "diversity_bonus": 0.25,
-      "family": "mean_reversion",
-      "generation_version": "v9",
-      "legacy_strategy_id": "mean_reversion_sol_usdt_adaptive_0",
-      "max_drawdown_pct": -4.97,
-      "monte_carlo": {
-        "failure_rate": 0.0,
-        "iterations": 500,
-        "p05_return_pct": 18.4671,
-        "p50_return_pct": 18.7639,
-        "p95_drawdown_pct": 6.4265,
-        "passed": true,
-        "score": 8.1867
-      },
-      "monte_carlo_score": 8.1866,
-      "pair_penalty": 1.85,
-      "parameter_strength": 7.731,
-      "perturbation": {
-        "mean_drawdown_pct": 5.1492,
-        "mean_return_pct": 15.0503,
-        "passed": true,
-        "stability_score": 2.0746,
-        "trials": 100
-      },
-      "perturbation_score": 2.0541,
-      "profit_factor": 2.66,
-      "regime": "mean_reversion",
-      "return_pct": 13.93,
-      "robustness_score": 8.1867,
-      "status": "deployable",
-      "strategy_epoch": 1,
-      "strategy_evidence": {
-        "cross_symbol_score": 1.0,
-        "monte_carlo_score": 8.1867,
-        "perturbation_score": 2.0746,
-        "robustness_score": 0.827,
-        "walk_forward_score": 4.894233333333333
-      },
-      "strategy_id": "mean_reversion_sol_usdt_0",
-      "symbol": "SOL/USDT",
-      "timeframe": "1h",
-      "trades": 58,
-      "updated_at": "2026-05-16T06:36:22.968795+00:00",
-      "validation": {
-        "cross_symbol": {
-          "mean_score": 1.0,
-          "passed": true,
-          "reasons": [],
-          "score_spread": 0.0,
-          "symbols_tested": [
-            "BTC/USDT",
-            "ETH/USDT"
-          ]
-        },
-        "evidence": {
-          "cross_symbol_score": 1.0,
-          "monte_carlo_score": 8.1867,
-          "perturbation_score": 2.0746,
-          "robustness_score": 0.827,
-          "walk_forward_score": 4.894233333333333
-        },
-        "monte_carlo": {
-          "failure_rate": 0.0,
-          "iterations": 500,
-          "p05_return_pct": 18.4671,
-          "p50_return_pct": 18.7639,
-          "p95_drawdown_pct": 6.4265,
-          "passed": true,
-          "score": 8.1867
-        },
-        "perturbation": {
-          "mean_drawdown_pct": 5.1492,
-          "mean_return_pct": 15.0503,
-          "passed": true,
-          "stability_score": 2.0746,
-          "trials": 100
-        },
-        "walk_forward": {
-          "fold_count": 4,
-          "passed": true,
-          "reasons": [],
-          "score_spread": 0.086,
-          "test_mean": 4.7893,
-          "train_mean": 5.0,
-          "val_mean": 4.8934
-        }
-      },
-      "validation_passed": true,
-      "validation_score": 4.3206,
-      "walk_forward": {
-        "fold_count": 4,
-        "passed": true,
-        "reasons": [],
-        "score_spread": 0.086,
-        "test_mean": 4.7893,
-        "train_mean": 5.0,
-        "val_mean": 4.8934
-      },
-      "walk_forward_score": 4.894233333333333
-    }
-  ],
-  "weights": {
-    "mean_reversion_sol_usdt_0": 0.2,
-    "trend_sol_usdt_1": 0.2
-  }
+  "probationary": true,
+  "rejected": [],
+  "selected": [],
+  "weights": {}
 }
 [exit_code=0]
 
@@ -1002,305 +773,288 @@ Command: python main.py portfolio-probationary
 {
   "allocation_telemetry": {
     "allocation_caps": {
-      "mean_reversion_btc_usdt_0": 0.225,
-      "mean_reversion_sol_usdt_2": 0.225,
-      "trend_eth_usdt_trend_1": 0.3
+      "mean_reversion_sol_usdt_mean_reversion_2": 0.4,
+      "trend_eth_usdt_trend_1": 0.4,
+      "volatility_compression_btc_usdt_volatility_compression_2": 0.4
     },
-    "cash_weight": 0.25,
+    "cash_weight": 0.0,
     "correlation_adjusted": true,
-    "covariance_penalty": 1.15,
+    "covariance_penalty": 0.24,
     "family_caps": {
-      "mean_reversion": 0.45,
-      "trend": 0.45
+      "mean_reversion": 0.65,
+      "trend": 0.65,
+      "volatility_compression": 0.65
     },
     "raw_weight_sum": 1.0,
-    "used_weight_sum": 0.75
+    "used_weight_sum": 1.0
   },
   "basket": {
     "allocation_telemetry": {
       "allocation_caps": {
-        "mean_reversion_btc_usdt_0": 0.225,
-        "mean_reversion_sol_usdt_2": 0.225,
-        "trend_eth_usdt_trend_1": 0.3
+        "mean_reversion_sol_usdt_mean_reversion_2": 0.4,
+        "trend_eth_usdt_trend_1": 0.4,
+        "volatility_compression_btc_usdt_volatility_compression_2": 0.4
       },
-      "cash_weight": 0.25,
+      "cash_weight": 0.0,
       "correlation_adjusted": true,
-      "covariance_penalty": 1.15,
+      "covariance_penalty": 0.24,
       "family_caps": {
-        "mean_reversion": 0.45,
-        "trend": 0.45
+        "mean_reversion": 0.65,
+        "trend": 0.65,
+        "volatility_compression": 0.65
       },
       "raw_weight_sum": 1.0,
-      "used_weight_sum": 0.75
+      "used_weight_sum": 1.0
     },
-    "basket_score": 17.183348,
+    "basket_score": 11.473007,
     "basket_size": 3,
-    "correlation_penalty": 1.15,
-    "diversity_score": 2.333333,
+    "correlation_penalty": 0.24,
+    "diversity_score": 3.0,
     "max_positions": 3,
     "min_positions": 2,
     "probationary": false,
     "rejected": [
       {
         "reason": "duplicate_symbol",
-        "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2"
-      },
-      {
-        "reason": "duplicate_symbol",
-        "strategy_id": "trend_sol_usdt_1"
-      },
-      {
-        "reason": "duplicate_symbol",
-        "strategy_id": "mean_reversion_sol_usdt_0"
-      },
-      {
-        "reason": "duplicate_symbol",
         "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3"
-      },
-      {
-        "reason": "duplicate_symbol",
-        "strategy_id": "volatility_compression_btc_usdt_3"
-      },
-      {
-        "reason": "duplicate_symbol",
-        "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2"
-      },
-      {
-        "reason": "duplicate_symbol",
-        "strategy_id": "mean_reversion_btc_usdt_3"
       }
     ],
     "selected": [
       {
-        "basket_score": 25.484725,
-        "candidate_score": 25.334725,
+        "basket_score": 17.496471,
+        "candidate_score": 17.346471,
         "cross_symbol": {
-          "mean_score": 0.8515,
+          "mean_score": 0.8011,
           "passed": true,
           "reasons": [],
-          "score_spread": 0.0012,
-          "symbols_tested": [
-            "BTC/USDT",
-            "ETH/USDT"
-          ]
-        },
-        "cross_symbol_score": 0.8515,
-        "diversity_bonus": 0.15,
-        "family": "mean_reversion",
-        "generation_version": "v9",
-        "legacy_strategy_id": "mean_reversion_sol_usdt_adaptive_2",
-        "max_drawdown_pct": -2.66,
-        "monte_carlo": {
-          "failure_rate": 0.0,
-          "iterations": 500,
-          "p05_return_pct": 26.1613,
-          "p50_return_pct": 26.6737,
-          "p95_drawdown_pct": 3.9645,
-          "passed": true,
-          "score": 8.6722
-        },
-        "monte_carlo_score": 8.6722,
-        "pair_penalty": 0.0,
-        "parameter_strength": 7.731,
-        "perturbation": {
-          "mean_drawdown_pct": 2.7572,
-          "mean_return_pct": 24.9872,
-          "passed": true,
-          "stability_score": 3.0509,
-          "trials": 100
-        },
-        "perturbation_score": 3.006,
-        "profit_factor": 2.07,
-        "regime": "mean_reversion",
-        "return_pct": 23.98,
-        "robustness_score": 8.6722,
-        "status": "probationary",
-        "strategy_epoch": 1,
-        "strategy_evidence": {
-          "cross_symbol_score": 0.8515,
-          "monte_carlo_score": 8.6722,
-          "perturbation_score": 3.0509,
-          "robustness_score": 0.69,
-          "walk_forward_score": 4.759266666666667
-        },
-        "strategy_id": "mean_reversion_sol_usdt_2",
-        "symbol": "SOL/USDT",
-        "timeframe": "1h",
-        "trades": 103,
-        "updated_at": "2026-05-16T06:36:22.968806+00:00",
-        "validation": {
-          "cross_symbol": {
-            "mean_score": 0.8515,
-            "passed": true,
-            "reasons": [],
-            "score_spread": 0.0012,
-            "symbols_tested": [
-              "BTC/USDT",
-              "ETH/USDT"
-            ]
-          },
-          "evidence": {
-            "cross_symbol_score": 0.8515,
-            "monte_carlo_score": 8.6722,
-            "perturbation_score": 3.0509,
-            "robustness_score": 0.69,
-            "walk_forward_score": 4.759266666666667
-          },
-          "monte_carlo": {
-            "failure_rate": 0.0,
-            "iterations": 500,
-            "p05_return_pct": 26.1613,
-            "p50_return_pct": 26.6737,
-            "p95_drawdown_pct": 3.9645,
-            "passed": true,
-            "score": 8.6722
-          },
-          "perturbation": {
-            "mean_drawdown_pct": 2.7572,
-            "mean_return_pct": 24.9872,
-            "passed": true,
-            "stability_score": 3.0509,
-            "trials": 100
-          },
-          "walk_forward": {
-            "fold_count": 4,
-            "passed": true,
-            "reasons": [],
-            "score_spread": 0.1689,
-            "test_mean": 4.5604,
-            "train_mean": 4.9733,
-            "val_mean": 4.7441
-          }
-        },
-        "validation_passed": true,
-        "validation_score": 4.4679,
-        "walk_forward": {
-          "fold_count": 4,
-          "passed": true,
-          "reasons": [],
-          "score_spread": 0.1689,
-          "test_mean": 4.5604,
-          "train_mean": 4.9733,
-          "val_mean": 4.7441
-        },
-        "walk_forward_score": 4.759266666666667
-      },
-      {
-        "basket_score": 17.821906,
-        "candidate_score": 18.421906,
-        "cross_symbol": {
-          "mean_score": 1.0,
-          "passed": true,
-          "reasons": [],
-          "score_spread": 0.0,
+          "score_spread": 0.0687,
           "symbols_tested": [
             "ETH/USDT",
             "SOL/USDT"
           ]
         },
-        "cross_symbol_score": 1.0,
-        "diversity_bonus": 0.35,
-        "family": "mean_reversion",
+        "cross_symbol_score": 0.8011,
+        "diversity_bonus": 0.15,
+        "family": "volatility_compression",
         "generation_version": "v9",
-        "legacy_strategy_id": "mean_reversion_btc_usdt_adaptive_0",
-        "max_drawdown_pct": -3.5,
+        "legacy_strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
+        "max_drawdown_pct": -2.77,
         "monte_carlo": {
           "failure_rate": 0.0,
-          "iterations": 500,
-          "p05_return_pct": 20.3927,
-          "p50_return_pct": 20.7125,
-          "p95_drawdown_pct": 4.6624,
+          "iterations": 300,
+          "p05_return_pct": 10.7585,
+          "p50_return_pct": 10.9131,
+          "p95_drawdown_pct": 4.3134,
           "passed": true,
-          "score": 8.3968
+          "score": 6.3975
         },
-        "monte_carlo_score": 8.3955,
-        "pair_penalty": 0.95,
-        "parameter_strength": 7.731,
+        "monte_carlo_score": 6.3975,
+        "pair_penalty": 0.0,
+        "parameter_strength": 5.942,
         "perturbation": {
-          "mean_drawdown_pct": 3.6662,
-          "mean_return_pct": 15.9811,
+          "mean_drawdown_pct": 2.8767,
+          "mean_return_pct": 8.0127,
           "passed": true,
-          "stability_score": 2.3108,
-          "trials": 100
+          "stability_score": 1.3564,
+          "trials": 60
         },
-        "perturbation_score": 2.2966,
-        "profit_factor": 2.03,
-        "regime": "mean_reversion",
-        "return_pct": 14.87,
-        "robustness_score": 8.3968,
-        "status": "probationary",
+        "perturbation_score": 1.3564,
+        "profit_factor": 2.46,
+        "quarantine_reason": "daemon_fill_simulation_below_threshold",
+        "regime": "volatility_compression",
+        "return_pct": 7.26,
+        "robustness_score": 6.3975,
+        "status": "validated",
         "strategy_epoch": 1,
         "strategy_evidence": {
-          "cross_symbol_score": 1.0,
-          "monte_carlo_score": 8.3968,
-          "perturbation_score": 2.3108,
-          "robustness_score": 0.896,
-          "walk_forward_score": 4.847933333333333
+          "cross_symbol_score": 0.8011,
+          "monte_carlo_score": 6.3975,
+          "perturbation_score": 1.3564,
+          "robustness_score": 0.699,
+          "walk_forward_score": 4.0533
         },
-        "strategy_id": "mean_reversion_btc_usdt_0",
+        "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
         "symbol": "BTC/USDT",
         "timeframe": "1h",
-        "trades": 210,
-        "updated_at": "2026-05-16T06:36:22.968740+00:00",
+        "trades": 151,
+        "updated_at": "2026-05-19T10:10:53.096225+00:00",
         "validation": {
           "cross_symbol": {
-            "mean_score": 1.0,
+            "mean_score": 0.8011,
             "passed": true,
             "reasons": [],
-            "score_spread": 0.0,
+            "score_spread": 0.0687,
             "symbols_tested": [
               "ETH/USDT",
               "SOL/USDT"
             ]
           },
           "evidence": {
-            "cross_symbol_score": 1.0,
-            "monte_carlo_score": 8.3968,
-            "perturbation_score": 2.3108,
-            "robustness_score": 0.896,
-            "walk_forward_score": 4.847933333333333
+            "cross_symbol_score": 0.8011,
+            "monte_carlo_score": 6.3975,
+            "perturbation_score": 1.3564,
+            "robustness_score": 0.699,
+            "walk_forward_score": 4.0533
           },
           "monte_carlo": {
             "failure_rate": 0.0,
-            "iterations": 500,
-            "p05_return_pct": 20.3927,
-            "p50_return_pct": 20.7125,
-            "p95_drawdown_pct": 4.6624,
+            "iterations": 300,
+            "p05_return_pct": 10.7585,
+            "p50_return_pct": 10.9131,
+            "p95_drawdown_pct": 4.3134,
             "passed": true,
-            "score": 8.3968
+            "score": 6.3975
           },
           "perturbation": {
-            "mean_drawdown_pct": 3.6662,
-            "mean_return_pct": 15.9811,
+            "mean_drawdown_pct": 2.8767,
+            "mean_return_pct": 8.0127,
             "passed": true,
-            "stability_score": 2.3108,
-            "trials": 100
+            "stability_score": 1.3564,
+            "trials": 60
           },
           "walk_forward": {
             "fold_count": 4,
             "passed": true,
             "reasons": [],
-            "score_spread": 0.1124,
-            "test_mean": 4.7151,
-            "train_mean": 4.9899,
-            "val_mean": 4.8388
+            "score_spread": 0.222,
+            "test_mean": 3.8227,
+            "train_mean": 4.3531,
+            "val_mean": 3.9841
           }
         },
         "validation_passed": true,
-        "validation_score": 4.3727,
+        "validation_score": 3.4525,
         "walk_forward": {
           "fold_count": 4,
           "passed": true,
           "reasons": [],
-          "score_spread": 0.1124,
-          "test_mean": 4.7151,
-          "train_mean": 4.9899,
-          "val_mean": 4.8388
+          "score_spread": 0.222,
+          "test_mean": 3.8227,
+          "train_mean": 4.3531,
+          "val_mean": 3.9841
         },
-        "walk_forward_score": 4.847933333333333
+        "walk_forward_score": 4.0533
       },
       {
-        "basket_score": 8.243413,
+        "basket_score": 8.899136,
+        "candidate_score": 8.639136,
+        "cross_symbol": {
+          "mean_score": 0.6241,
+          "passed": true,
+          "reasons": [],
+          "score_spread": 0.0334,
+          "symbols_tested": [
+            "BTC/USDT",
+            "ETH/USDT"
+          ]
+        },
+        "cross_symbol_score": 0.6241,
+        "decay_score": 0.0,
+        "diversity_bonus": 0.34,
+        "family": "mean_reversion",
+        "generation_version": "v9",
+        "legacy_strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+        "max_drawdown_pct": -4.85,
+        "monte_carlo": {
+          "failure_rate": 0.0,
+          "iterations": 300,
+          "p05_return_pct": 10.4932,
+          "p50_return_pct": 10.6827,
+          "p95_drawdown_pct": 6.8518,
+          "passed": true,
+          "score": 4.9903
+        },
+        "monte_carlo_score": 4.9903,
+        "pair_penalty": 0.08,
+        "parameter_strength": 7.731,
+        "perturbation": {
+          "mean_drawdown_pct": 4.9968,
+          "mean_return_pct": 9.3016,
+          "passed": true,
+          "stability_score": 1.2063,
+          "trials": 60
+        },
+        "perturbation_score": 1.2063,
+        "profit_factor": 1.99,
+        "quarantine_reason": "daemon_fill_simulation_below_threshold",
+        "regime": "mean_reversion",
+        "retired": false,
+        "retirement_reason": "",
+        "return_pct": 8.97,
+        "robustness_score": 4.9903,
+        "status": "validated",
+        "strategy_epoch": 1,
+        "strategy_evidence": {
+          "cross_symbol_score": 0.6241,
+          "monte_carlo_score": 4.9903,
+          "perturbation_score": 1.2063,
+          "robustness_score": 0.526,
+          "walk_forward_score": 3.4425666666666666
+        },
+        "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+        "symbol": "SOL/USDT",
+        "timeframe": "1h",
+        "trades": 281,
+        "updated_at": "2026-05-19T10:10:53.017486+00:00",
+        "validation": {
+          "cross_symbol": {
+            "mean_score": 0.6241,
+            "passed": true,
+            "reasons": [],
+            "score_spread": 0.0334,
+            "symbols_tested": [
+              "BTC/USDT",
+              "ETH/USDT"
+            ]
+          },
+          "evidence": {
+            "cross_symbol_score": 0.6241,
+            "monte_carlo_score": 4.9903,
+            "perturbation_score": 1.2063,
+            "robustness_score": 0.526,
+            "walk_forward_score": 3.4425666666666666
+          },
+          "monte_carlo": {
+            "failure_rate": 0.0,
+            "iterations": 300,
+            "p05_return_pct": 10.4932,
+            "p50_return_pct": 10.6827,
+            "p95_drawdown_pct": 6.8518,
+            "passed": true,
+            "score": 4.9903
+          },
+          "perturbation": {
+            "mean_drawdown_pct": 4.9968,
+            "mean_return_pct": 9.3016,
+            "passed": true,
+            "stability_score": 1.2063,
+            "trials": 60
+          },
+          "walk_forward": {
+            "fold_count": 4,
+            "passed": true,
+            "reasons": [],
+            "score_spread": 0.1975,
+            "test_mean": 3.2393,
+            "train_mean": 3.7101,
+            "val_mean": 3.3783
+          }
+        },
+        "validation_passed": true,
+        "validation_score": 2.8581,
+        "walk_forward": {
+          "fold_count": 4,
+          "passed": true,
+          "reasons": [],
+          "score_spread": 0.1975,
+          "test_mean": 3.2393,
+          "train_mean": 3.7101,
+          "val_mean": 3.3783
+        },
+        "walk_forward_score": 3.4425666666666666
+      },
+      {
+        "basket_score": 8.023413,
         "candidate_score": 7.843413,
         "cross_symbol": {
           "mean_score": 0.753,
@@ -1313,7 +1067,8 @@ Command: python main.py portfolio-probationary
           ]
         },
         "cross_symbol_score": 0.753,
-        "diversity_bonus": 0.6,
+        "decay_score": 0.0,
+        "diversity_bonus": 0.34,
         "family": "trend",
         "generation_version": "v9",
         "legacy_strategy_id": "trend_eth_usdt_trend_1",
@@ -1328,7 +1083,7 @@ Command: python main.py portfolio-probationary
           "score": 5.2893
         },
         "monte_carlo_score": 5.2893,
-        "pair_penalty": 0.2,
+        "pair_penalty": 0.16,
         "parameter_strength": 14.438,
         "perturbation": {
           "mean_drawdown_pct": 4.4152,
@@ -1339,7 +1094,10 @@ Command: python main.py portfolio-probationary
         },
         "perturbation_score": 0.8055,
         "profit_factor": 1.97,
+        "quarantine_reason": "",
         "regime": "trend",
+        "retired": false,
+        "retirement_reason": "",
         "return_pct": 2.14,
         "robustness_score": 5.2893,
         "status": "validated",
@@ -1355,7 +1113,7 @@ Command: python main.py portfolio-probationary
         "symbol": "ETH/USDT",
         "timeframe": "1h",
         "trades": 307,
-        "updated_at": "2026-05-18T06:37:27.175358+00:00",
+        "updated_at": "2026-05-19T10:10:53.450833+00:00",
         "validation": {
           "cross_symbol": {
             "mean_score": 0.753,
@@ -1415,41 +1173,41 @@ Command: python main.py portfolio-probationary
       }
     ],
     "weights": {
-      "mean_reversion_btc_usdt_0": 0.225,
-      "mean_reversion_sol_usdt_2": 0.225,
-      "trend_eth_usdt_trend_1": 0.3
+      "mean_reversion_sol_usdt_mean_reversion_2": 0.3089331153879704,
+      "trend_eth_usdt_trend_1": 0.2910668846120297,
+      "volatility_compression_btc_usdt_volatility_compression_2": 0.4
     }
   },
   "mode": "probationary",
   "portfolio": [
     {
-      "allocation_pct": 0.225,
-      "allocation_weight": 0.225,
-      "basket_score": 25.4847,
-      "candidate_score": 25.3347,
-      "family": "mean_reversion",
+      "allocation_pct": 0.4,
+      "allocation_weight": 0.4,
+      "basket_score": 17.4965,
+      "candidate_score": 17.3465,
+      "family": "volatility_compression",
       "probationary": false,
-      "regime": "mean_reversion",
-      "status": "probationary",
-      "strategy_id": "mean_reversion_sol_usdt_2",
-      "symbol": "SOL/USDT"
-    },
-    {
-      "allocation_pct": 0.225,
-      "allocation_weight": 0.225,
-      "basket_score": 17.8219,
-      "candidate_score": 18.4219,
-      "family": "mean_reversion",
-      "probationary": false,
-      "regime": "mean_reversion",
-      "status": "probationary",
-      "strategy_id": "mean_reversion_btc_usdt_0",
+      "regime": "volatility_compression",
+      "status": "validated",
+      "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
       "symbol": "BTC/USDT"
     },
     {
-      "allocation_pct": 0.3,
-      "allocation_weight": 0.3,
-      "basket_score": 8.2434,
+      "allocation_pct": 0.308933,
+      "allocation_weight": 0.308933,
+      "basket_score": 8.8991,
+      "candidate_score": 8.6391,
+      "family": "mean_reversion",
+      "probationary": false,
+      "regime": "mean_reversion",
+      "status": "validated",
+      "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+      "symbol": "SOL/USDT"
+    },
+    {
+      "allocation_pct": 0.291067,
+      "allocation_weight": 0.291067,
+      "basket_score": 8.0234,
       "candidate_score": 7.8434,
       "family": "trend",
       "probationary": false,
@@ -1459,6 +1217,2044 @@ Command: python main.py portfolio-probationary
       "symbol": "ETH/USDT"
     }
   ]
+}
+[exit_code=0]
+
+----- daemon-once -----
+Command: python main.py daemon-once
+{
+  "candidate_count": 2,
+  "candidate_source_counts": {
+    "deployable": 0,
+    "probationary": 2,
+    "validated": 11
+  },
+  "execution": {
+    "acceptance_history": [
+      {
+        "accepted": true,
+        "expected_price": 102.9205,
+        "fill_price": 102.9205,
+        "fill_ratio": 0.4011,
+        "rejection_reason": null,
+        "requested_quantity": 32.5,
+        "side": "buy",
+        "slippage_bps": -0.0015,
+        "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+        "symbol": "BTC/USDT"
+      },
+      {
+        "accepted": true,
+        "expected_price": 107.8717,
+        "fill_price": 107.8717,
+        "fill_ratio": 0.3689,
+        "rejection_reason": null,
+        "requested_quantity": 32.5,
+        "side": "buy",
+        "slippage_bps": 0.0005,
+        "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+        "symbol": "ETH/USDT"
+      }
+    ],
+    "average_slippage_bps": -0.0005,
+    "capital_committed": 6850.7468,
+    "equity_after": 9993.1493,
+    "equity_before": 10000.0,
+    "execution_quality_score": 0.999999,
+    "fill_rate": 1.0,
+    "filled_orders": 2,
+    "fills": [
+      {
+        "fill_price": 102.9205,
+        "quantity": 32.5,
+        "side": "buy",
+        "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+        "symbol": "BTC/USDT"
+      },
+      {
+        "fill_price": 107.8717,
+        "quantity": 32.5,
+        "side": "buy",
+        "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+        "symbol": "ETH/USDT"
+      }
+    ],
+    "mode": "paper",
+    "per_strategy_stats": {
+      "mean_reversion_btc_usdt_mean_reversion_3": {
+        "average_slippage_bps": -0.0015,
+        "execution_quality_score": 0.999997,
+        "fill_rate": 1.0,
+        "filled_orders": 1,
+        "rejected_orders": 0,
+        "requested_orders": 1
+      },
+      "mean_reversion_eth_usdt_mean_reversion_1": {
+        "average_slippage_bps": 0.0005,
+        "execution_quality_score": 0.999999,
+        "fill_rate": 1.0,
+        "filled_orders": 1,
+        "rejected_orders": 0,
+        "requested_orders": 1
+      }
+    },
+    "rejected_orders": 0,
+    "rejection_telemetry": {
+      "reasons": {},
+      "total_rejections": 0,
+      "unique_strategies_rejected": 0
+    },
+    "rejections": [],
+    "requested_orders": 2
+  },
+  "execution_signal": {
+    "approved": true,
+    "fill_rate": 1.0,
+    "filled_orders": 2,
+    "reason": "execution_full_fill",
+    "rejected_orders": 0
+  },
+  "portfolio": [
+    {
+      "allocation_pct": 0.325,
+      "allocation_weight": 0.325,
+      "basket_score": 10.0679,
+      "candidate_score": 9.9179,
+      "family": "mean_reversion",
+      "probationary": false,
+      "regime": "mean_reversion",
+      "status": "probationary",
+      "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+      "symbol": "BTC/USDT"
+    },
+    {
+      "allocation_pct": 0.325,
+      "allocation_weight": 0.325,
+      "basket_score": 6.2706,
+      "candidate_score": 6.6506,
+      "family": "mean_reversion",
+      "probationary": false,
+      "regime": "mean_reversion",
+      "status": "probationary",
+      "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+      "symbol": "ETH/USDT"
+    }
+  ],
+  "risk": {
+    "approved": true,
+    "capital_multiplier": 1.0,
+    "portfolio_drawdown_pct": -1.5,
+    "reason": "approved",
+    "rolling_loss_streak": 0,
+    "volatility_regime_score": 0.4
+  },
+  "selected_count": 2,
+  "selected_source": "probationary",
+  "selected_source_count": 2,
+  "selection_reason": "probationary",
+  "state_summary": {
+    "cycle_count": 36,
+    "execution_count": 38,
+    "latest_cycle": {
+      "candidate_count": 2,
+      "candidate_source_counts": {
+        "deployable": 0,
+        "probationary": 2,
+        "validated": 11
+      },
+      "execution": {
+        "acceptance_history": [
+          {
+            "accepted": true,
+            "expected_price": 102.9205,
+            "fill_price": 102.9205,
+            "fill_ratio": 0.4011,
+            "rejection_reason": null,
+            "requested_quantity": 32.5,
+            "side": "buy",
+            "slippage_bps": -0.0015,
+            "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+            "symbol": "BTC/USDT"
+          },
+          {
+            "accepted": true,
+            "expected_price": 107.8717,
+            "fill_price": 107.8717,
+            "fill_ratio": 0.3689,
+            "rejection_reason": null,
+            "requested_quantity": 32.5,
+            "side": "buy",
+            "slippage_bps": 0.0005,
+            "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+            "symbol": "ETH/USDT"
+          }
+        ],
+        "average_slippage_bps": -0.0005,
+        "capital_committed": 6850.7468,
+        "equity_after": 9993.1493,
+        "equity_before": 10000.0,
+        "execution_quality_score": 0.999999,
+        "fill_rate": 1.0,
+        "filled_orders": 2,
+        "fills": [
+          {
+            "fill_price": 102.9205,
+            "quantity": 32.5,
+            "side": "buy",
+            "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+            "symbol": "BTC/USDT"
+          },
+          {
+            "fill_price": 107.8717,
+            "quantity": 32.5,
+            "side": "buy",
+            "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+            "symbol": "ETH/USDT"
+          }
+        ],
+        "mode": "paper",
+        "per_strategy_stats": {
+          "mean_reversion_btc_usdt_mean_reversion_3": {
+            "average_slippage_bps": -0.0015,
+            "execution_quality_score": 0.999997,
+            "fill_rate": 1.0,
+            "filled_orders": 1,
+            "rejected_orders": 0,
+            "requested_orders": 1
+          },
+          "mean_reversion_eth_usdt_mean_reversion_1": {
+            "average_slippage_bps": 0.0005,
+            "execution_quality_score": 0.999999,
+            "fill_rate": 1.0,
+            "filled_orders": 1,
+            "rejected_orders": 0,
+            "requested_orders": 1
+          }
+        },
+        "rejected_orders": 0,
+        "rejection_telemetry": {
+          "reasons": {},
+          "total_rejections": 0,
+          "unique_strategies_rejected": 0
+        },
+        "rejections": [],
+        "requested_orders": 2
+      },
+      "execution_signal": {
+        "approved": true,
+        "fill_rate": 1.0,
+        "filled_orders": 2,
+        "reason": "execution_full_fill",
+        "rejected_orders": 0
+      },
+      "portfolio": [
+        {
+          "allocation_pct": 0.325,
+          "allocation_weight": 0.325,
+          "basket_score": 10.0679,
+          "candidate_score": 9.9179,
+          "family": "mean_reversion",
+          "probationary": false,
+          "regime": "mean_reversion",
+          "status": "probationary",
+          "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+          "symbol": "BTC/USDT"
+        },
+        {
+          "allocation_pct": 0.325,
+          "allocation_weight": 0.325,
+          "basket_score": 6.2706,
+          "candidate_score": 6.6506,
+          "family": "mean_reversion",
+          "probationary": false,
+          "regime": "mean_reversion",
+          "status": "probationary",
+          "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+          "symbol": "ETH/USDT"
+        }
+      ],
+      "risk": {
+        "approved": true,
+        "capital_multiplier": 1.0,
+        "portfolio_drawdown_pct": -1.5,
+        "reason": "approved",
+        "rolling_loss_streak": 0,
+        "volatility_regime_score": 0.4
+      },
+      "selected_count": 2,
+      "selected_source": "probationary",
+      "selected_source_count": 2,
+      "selection_reason": "probationary",
+      "thin_basket_note": null,
+      "timestamp": "2026-05-19T10:10:55.106406+00:00",
+      "transition_summary": [
+        {
+          "from": "probationary",
+          "reason": "execution_full_fill",
+          "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+          "to": "active"
+        },
+        {
+          "from": "probationary",
+          "reason": "execution_full_fill",
+          "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+          "to": "active"
+        }
+      ]
+    },
+    "latest_execution": {
+      "acceptance_history": [
+        {
+          "accepted": true,
+          "expected_price": 102.9205,
+          "fill_price": 102.9205,
+          "fill_ratio": 0.4011,
+          "rejection_reason": null,
+          "requested_quantity": 32.5,
+          "side": "buy",
+          "slippage_bps": -0.0015,
+          "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+          "symbol": "BTC/USDT"
+        },
+        {
+          "accepted": true,
+          "expected_price": 107.8717,
+          "fill_price": 107.8717,
+          "fill_ratio": 0.3689,
+          "rejection_reason": null,
+          "requested_quantity": 32.5,
+          "side": "buy",
+          "slippage_bps": 0.0005,
+          "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+          "symbol": "ETH/USDT"
+        }
+      ],
+      "average_slippage_bps": -0.0005,
+      "capital_committed": 6850.7468,
+      "equity_after": 9993.1493,
+      "equity_before": 10000.0,
+      "execution_quality_score": 0.999999,
+      "fill_rate": 1.0,
+      "filled_orders": 2,
+      "fills": [
+        {
+          "fill_price": 102.9205,
+          "quantity": 32.5,
+          "side": "buy",
+          "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+          "symbol": "BTC/USDT"
+        },
+        {
+          "fill_price": 107.8717,
+          "quantity": 32.5,
+          "side": "buy",
+          "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+          "symbol": "ETH/USDT"
+        }
+      ],
+      "mode": "paper",
+      "per_strategy_stats": {
+        "mean_reversion_btc_usdt_mean_reversion_3": {
+          "average_slippage_bps": -0.0015,
+          "execution_quality_score": 0.999997,
+          "fill_rate": 1.0,
+          "filled_orders": 1,
+          "rejected_orders": 0,
+          "requested_orders": 1
+        },
+        "mean_reversion_eth_usdt_mean_reversion_1": {
+          "average_slippage_bps": 0.0005,
+          "execution_quality_score": 0.999999,
+          "fill_rate": 1.0,
+          "filled_orders": 1,
+          "rejected_orders": 0,
+          "requested_orders": 1
+        }
+      },
+      "rejected_orders": 0,
+      "rejection_telemetry": {
+        "reasons": {},
+        "total_rejections": 0,
+        "unique_strategies_rejected": 0
+      },
+      "rejections": [],
+      "requested_orders": 2
+    },
+    "path": "state\\ver9_runtime_state.json",
+    "quarantined_count": 15,
+    "recovery_count": 1,
+    "retirement_count": 0,
+    "risk_event_count": 36,
+    "strategy_status_counts": {
+      "active": 10,
+      "quarantined": 11
+    }
+  },
+  "thin_basket_note": null,
+  "timestamp": "2026-05-19T10:10:55.106406+00:00",
+  "transition_summary": [
+    {
+      "from": "probationary",
+      "reason": "execution_full_fill",
+      "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+      "to": "active"
+    },
+    {
+      "from": "probationary",
+      "reason": "execution_full_fill",
+      "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+      "to": "active"
+    }
+  ]
+}
+[exit_code=0]
+
+----- complete-state -----
+Command: python main.py complete-state
+{
+  "cycle_count": 36,
+  "execution_count": 38,
+  "latest_cycle": {
+    "candidate_count": 2,
+    "candidate_source_counts": {
+      "deployable": 0,
+      "probationary": 2,
+      "validated": 11
+    },
+    "execution": {
+      "acceptance_history": [
+        {
+          "accepted": true,
+          "expected_price": 102.9205,
+          "fill_price": 102.9205,
+          "fill_ratio": 0.4011,
+          "rejection_reason": null,
+          "requested_quantity": 32.5,
+          "side": "buy",
+          "slippage_bps": -0.0015,
+          "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+          "symbol": "BTC/USDT"
+        },
+        {
+          "accepted": true,
+          "expected_price": 107.8717,
+          "fill_price": 107.8717,
+          "fill_ratio": 0.3689,
+          "rejection_reason": null,
+          "requested_quantity": 32.5,
+          "side": "buy",
+          "slippage_bps": 0.0005,
+          "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+          "symbol": "ETH/USDT"
+        }
+      ],
+      "average_slippage_bps": -0.0005,
+      "capital_committed": 6850.7468,
+      "equity_after": 9993.1493,
+      "equity_before": 10000.0,
+      "execution_quality_score": 0.999999,
+      "fill_rate": 1.0,
+      "filled_orders": 2,
+      "fills": [
+        {
+          "fill_price": 102.9205,
+          "quantity": 32.5,
+          "side": "buy",
+          "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+          "symbol": "BTC/USDT"
+        },
+        {
+          "fill_price": 107.8717,
+          "quantity": 32.5,
+          "side": "buy",
+          "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+          "symbol": "ETH/USDT"
+        }
+      ],
+      "mode": "paper",
+      "per_strategy_stats": {
+        "mean_reversion_btc_usdt_mean_reversion_3": {
+          "average_slippage_bps": -0.0015,
+          "execution_quality_score": 0.999997,
+          "fill_rate": 1.0,
+          "filled_orders": 1,
+          "rejected_orders": 0,
+          "requested_orders": 1
+        },
+        "mean_reversion_eth_usdt_mean_reversion_1": {
+          "average_slippage_bps": 0.0005,
+          "execution_quality_score": 0.999999,
+          "fill_rate": 1.0,
+          "filled_orders": 1,
+          "rejected_orders": 0,
+          "requested_orders": 1
+        }
+      },
+      "rejected_orders": 0,
+      "rejection_telemetry": {
+        "reasons": {},
+        "total_rejections": 0,
+        "unique_strategies_rejected": 0
+      },
+      "rejections": [],
+      "requested_orders": 2
+    },
+    "execution_signal": {
+      "approved": true,
+      "fill_rate": 1.0,
+      "filled_orders": 2,
+      "reason": "execution_full_fill",
+      "rejected_orders": 0
+    },
+    "portfolio": [
+      {
+        "allocation_pct": 0.325,
+        "allocation_weight": 0.325,
+        "basket_score": 10.0679,
+        "candidate_score": 9.9179,
+        "family": "mean_reversion",
+        "probationary": false,
+        "regime": "mean_reversion",
+        "status": "probationary",
+        "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+        "symbol": "BTC/USDT"
+      },
+      {
+        "allocation_pct": 0.325,
+        "allocation_weight": 0.325,
+        "basket_score": 6.2706,
+        "candidate_score": 6.6506,
+        "family": "mean_reversion",
+        "probationary": false,
+        "regime": "mean_reversion",
+        "status": "probationary",
+        "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+        "symbol": "ETH/USDT"
+      }
+    ],
+    "risk": {
+      "approved": true,
+      "capital_multiplier": 1.0,
+      "portfolio_drawdown_pct": -1.5,
+      "reason": "approved",
+      "rolling_loss_streak": 0,
+      "volatility_regime_score": 0.4
+    },
+    "selected_count": 2,
+    "selected_source": "probationary",
+    "selected_source_count": 2,
+    "selection_reason": "probationary",
+    "thin_basket_note": null,
+    "timestamp": "2026-05-19T10:10:55.106406+00:00",
+    "transition_summary": [
+      {
+        "from": "probationary",
+        "reason": "execution_full_fill",
+        "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+        "to": "active"
+      },
+      {
+        "from": "probationary",
+        "reason": "execution_full_fill",
+        "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+        "to": "active"
+      }
+    ]
+  },
+  "latest_execution": {
+    "acceptance_history": [
+      {
+        "accepted": true,
+        "expected_price": 102.9205,
+        "fill_price": 102.9205,
+        "fill_ratio": 0.4011,
+        "rejection_reason": null,
+        "requested_quantity": 32.5,
+        "side": "buy",
+        "slippage_bps": -0.0015,
+        "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+        "symbol": "BTC/USDT"
+      },
+      {
+        "accepted": true,
+        "expected_price": 107.8717,
+        "fill_price": 107.8717,
+        "fill_ratio": 0.3689,
+        "rejection_reason": null,
+        "requested_quantity": 32.5,
+        "side": "buy",
+        "slippage_bps": 0.0005,
+        "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+        "symbol": "ETH/USDT"
+      }
+    ],
+    "average_slippage_bps": -0.0005,
+    "capital_committed": 6850.7468,
+    "equity_after": 9993.1493,
+    "equity_before": 10000.0,
+    "execution_quality_score": 0.999999,
+    "fill_rate": 1.0,
+    "filled_orders": 2,
+    "fills": [
+      {
+        "fill_price": 102.9205,
+        "quantity": 32.5,
+        "side": "buy",
+        "strategy_id": "mean_reversion_btc_usdt_mean_reversion_3",
+        "symbol": "BTC/USDT"
+      },
+      {
+        "fill_price": 107.8717,
+        "quantity": 32.5,
+        "side": "buy",
+        "strategy_id": "mean_reversion_eth_usdt_mean_reversion_1",
+        "symbol": "ETH/USDT"
+      }
+    ],
+    "mode": "paper",
+    "per_strategy_stats": {
+      "mean_reversion_btc_usdt_mean_reversion_3": {
+        "average_slippage_bps": -0.0015,
+        "execution_quality_score": 0.999997,
+        "fill_rate": 1.0,
+        "filled_orders": 1,
+        "rejected_orders": 0,
+        "requested_orders": 1
+      },
+      "mean_reversion_eth_usdt_mean_reversion_1": {
+        "average_slippage_bps": 0.0005,
+        "execution_quality_score": 0.999999,
+        "fill_rate": 1.0,
+        "filled_orders": 1,
+        "rejected_orders": 0,
+        "requested_orders": 1
+      }
+    },
+    "rejected_orders": 0,
+    "rejection_telemetry": {
+      "reasons": {},
+      "total_rejections": 0,
+      "unique_strategies_rejected": 0
+    },
+    "rejections": [],
+    "requested_orders": 2
+  },
+  "path": "state\\ver9_runtime_state.json",
+  "quarantined_count": 15,
+  "recovery_count": 1,
+  "retirement_count": 0,
+  "risk_event_count": 36,
+  "strategy_status_counts": {
+    "active": 10,
+    "quarantined": 11
+  }
+}
+[exit_code=0]
+
+----- daemon-forever -----
+Command: python main.py daemon-forever --max-cycles 3
+{
+  "cycles": [
+    {
+      "candidate_count": 11,
+      "candidate_source_counts": {
+        "deployable": 0,
+        "probationary": 0,
+        "validated": 11
+      },
+      "execution": {
+        "acceptance_history": [
+          {
+            "accepted": false,
+            "expected_price": 100.4395,
+            "fill_price": null,
+            "fill_ratio": 0.2355,
+            "rejection_reason": "fill_simulation_below_threshold",
+            "requested_quantity": 40.0,
+            "side": "buy",
+            "slippage_bps": null,
+            "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
+            "symbol": "BTC/USDT"
+          },
+          {
+            "accepted": false,
+            "expected_price": 107.3197,
+            "fill_price": null,
+            "fill_ratio": 0.2243,
+            "rejection_reason": "fill_simulation_below_threshold",
+            "requested_quantity": 30.8933,
+            "side": "buy",
+            "slippage_bps": null,
+            "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+            "symbol": "SOL/USDT"
+          },
+          {
+            "accepted": true,
+            "expected_price": 105.7649,
+            "fill_price": 105.7649,
+            "fill_ratio": 0.8845,
+            "rejection_reason": null,
+            "requested_quantity": 29.1067,
+            "side": "buy",
+            "slippage_bps": -0.0045,
+            "strategy_id": "trend_eth_usdt_trend_1",
+            "symbol": "ETH/USDT"
+          }
+        ],
+        "average_slippage_bps": -0.0045,
+        "capital_committed": 3078.4686,
+        "equity_after": 9996.9215,
+        "equity_before": 10000.0,
+        "execution_quality_score": 0.56666,
+        "fill_rate": 0.333333,
+        "filled_orders": 1,
+        "fills": [
+          {
+            "fill_price": 105.7649,
+            "quantity": 29.1067,
+            "side": "buy",
+            "strategy_id": "trend_eth_usdt_trend_1",
+            "symbol": "ETH/USDT"
+          }
+        ],
+        "mode": "paper",
+        "per_strategy_stats": {
+          "mean_reversion_sol_usdt_mean_reversion_2": {
+            "average_slippage_bps": 0.0,
+            "execution_quality_score": 0.45,
+            "fill_rate": 0.0,
+            "filled_orders": 0,
+            "rejected_orders": 1,
+            "requested_orders": 1
+          },
+          "trend_eth_usdt_trend_1": {
+            "average_slippage_bps": -0.0045,
+            "execution_quality_score": 0.999992,
+            "fill_rate": 1.0,
+            "filled_orders": 1,
+            "rejected_orders": 0,
+            "requested_orders": 1
+          },
+          "volatility_compression_btc_usdt_volatility_compression_2": {
+            "average_slippage_bps": 0.0,
+            "execution_quality_score": 0.45,
+            "fill_rate": 0.0,
+            "filled_orders": 0,
+            "rejected_orders": 1,
+            "requested_orders": 1
+          }
+        },
+        "rejected_orders": 2,
+        "rejection_telemetry": {
+          "reasons": {
+            "fill_simulation_below_threshold": 2
+          },
+          "total_rejections": 2,
+          "unique_strategies_rejected": 2
+        },
+        "rejections": [
+          {
+            "fill_ratio": 0.2355,
+            "reason": "fill_simulation_below_threshold",
+            "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
+            "symbol": "BTC/USDT"
+          },
+          {
+            "fill_ratio": 0.2243,
+            "reason": "fill_simulation_below_threshold",
+            "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+            "symbol": "SOL/USDT"
+          }
+        ],
+        "requested_orders": 3
+      },
+      "execution_signal": {
+        "approved": false,
+        "fill_rate": 0.333333,
+        "filled_orders": 1,
+        "reason": "execution_low_fill_rate",
+        "rejected_orders": 2
+      },
+      "portfolio": [
+        {
+          "allocation_pct": 0.4,
+          "allocation_weight": 0.4,
+          "basket_score": 17.4965,
+          "candidate_score": 17.3465,
+          "family": "volatility_compression",
+          "probationary": false,
+          "regime": "volatility_compression",
+          "status": "validated",
+          "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
+          "symbol": "BTC/USDT"
+        },
+        {
+          "allocation_pct": 0.308933,
+          "allocation_weight": 0.308933,
+          "basket_score": 8.8991,
+          "candidate_score": 8.6391,
+          "family": "mean_reversion",
+          "probationary": false,
+          "regime": "mean_reversion",
+          "status": "validated",
+          "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+          "symbol": "SOL/USDT"
+        },
+        {
+          "allocation_pct": 0.291067,
+          "allocation_weight": 0.291067,
+          "basket_score": 8.0234,
+          "candidate_score": 7.8434,
+          "family": "trend",
+          "probationary": false,
+          "regime": "trend",
+          "status": "validated",
+          "strategy_id": "trend_eth_usdt_trend_1",
+          "symbol": "ETH/USDT"
+        }
+      ],
+      "risk": {
+        "approved": true,
+        "capital_multiplier": 0.5,
+        "portfolio_drawdown_pct": -10.5,
+        "reason": "volatility_throttle",
+        "rolling_loss_streak": 3,
+        "volatility_regime_score": 0.92
+      },
+      "selected_count": 3,
+      "selected_source": "validated",
+      "selected_source_count": 11,
+      "selection_reason": "validated",
+      "state_summary": {
+        "cycle_count": 37,
+        "execution_count": 39,
+        "latest_cycle": {
+          "candidate_count": 11,
+          "candidate_source_counts": {
+            "deployable": 0,
+            "probationary": 0,
+            "validated": 11
+          },
+          "execution": {
+            "acceptance_history": [
+              {
+                "accepted": false,
+                "expected_price": 100.4395,
+                "fill_price": null,
+                "fill_ratio": 0.2355,
+                "rejection_reason": "fill_simulation_below_threshold",
+                "requested_quantity": 40.0,
+                "side": "buy",
+                "slippage_bps": null,
+                "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
+                "symbol": "BTC/USDT"
+              },
+              {
+                "accepted": false,
+                "expected_price": 107.3197,
+                "fill_price": null,
+                "fill_ratio": 0.2243,
+                "rejection_reason": "fill_simulation_below_threshold",
+                "requested_quantity": 30.8933,
+                "side": "buy",
+                "slippage_bps": null,
+                "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+                "symbol": "SOL/USDT"
+              },
+              {
+                "accepted": true,
+                "expected_price": 105.7649,
+                "fill_price": 105.7649,
+                "fill_ratio": 0.8845,
+                "rejection_reason": null,
+                "requested_quantity": 29.1067,
+                "side": "buy",
+                "slippage_bps": -0.0045,
+                "strategy_id": "trend_eth_usdt_trend_1",
+                "symbol": "ETH/USDT"
+              }
+            ],
+            "average_slippage_bps": -0.0045,
+            "capital_committed": 3078.4686,
+            "equity_after": 9996.9215,
+            "equity_before": 10000.0,
+            "execution_quality_score": 0.56666,
+            "fill_rate": 0.333333,
+            "filled_orders": 1,
+            "fills": [
+              {
+                "fill_price": 105.7649,
+                "quantity": 29.1067,
+                "side": "buy",
+                "strategy_id": "trend_eth_usdt_trend_1",
+                "symbol": "ETH/USDT"
+              }
+            ],
+            "mode": "paper",
+            "per_strategy_stats": {
+              "mean_reversion_sol_usdt_mean_reversion_2": {
+                "average_slippage_bps": 0.0,
+                "execution_quality_score": 0.45,
+                "fill_rate": 0.0,
+                "filled_orders": 0,
+                "rejected_orders": 1,
+                "requested_orders": 1
+              },
+              "trend_eth_usdt_trend_1": {
+                "average_slippage_bps": -0.0045,
+                "execution_quality_score": 0.999992,
+                "fill_rate": 1.0,
+                "filled_orders": 1,
+                "rejected_orders": 0,
+                "requested_orders": 1
+              },
+              "volatility_compression_btc_usdt_volatility_compression_2": {
+                "average_slippage_bps": 0.0,
+                "execution_quality_score": 0.45,
+                "fill_rate": 0.0,
+                "filled_orders": 0,
+                "rejected_orders": 1,
+                "requested_orders": 1
+              }
+            },
+            "rejected_orders": 2,
+            "rejection_telemetry": {
+              "reasons": {
+                "fill_simulation_below_threshold": 2
+              },
+              "total_rejections": 2,
+              "unique_strategies_rejected": 2
+            },
+            "rejections": [
+              {
+                "fill_ratio": 0.2355,
+                "reason": "fill_simulation_below_threshold",
+                "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
+                "symbol": "BTC/USDT"
+              },
+              {
+                "fill_ratio": 0.2243,
+                "reason": "fill_simulation_below_threshold",
+                "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+                "symbol": "SOL/USDT"
+              }
+            ],
+            "requested_orders": 3
+          },
+          "execution_signal": {
+            "approved": false,
+            "fill_rate": 0.333333,
+            "filled_orders": 1,
+            "reason": "execution_low_fill_rate",
+            "rejected_orders": 2
+          },
+          "portfolio": [
+            {
+              "allocation_pct": 0.4,
+              "allocation_weight": 0.4,
+              "basket_score": 17.4965,
+              "candidate_score": 17.3465,
+              "family": "volatility_compression",
+              "probationary": false,
+              "regime": "volatility_compression",
+              "status": "validated",
+              "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
+              "symbol": "BTC/USDT"
+            },
+            {
+              "allocation_pct": 0.308933,
+              "allocation_weight": 0.308933,
+              "basket_score": 8.8991,
+              "candidate_score": 8.6391,
+              "family": "mean_reversion",
+              "probationary": false,
+              "regime": "mean_reversion",
+              "status": "validated",
+              "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+              "symbol": "SOL/USDT"
+            },
+            {
+              "allocation_pct": 0.291067,
+              "allocation_weight": 0.291067,
+              "basket_score": 8.0234,
+              "candidate_score": 7.8434,
+              "family": "trend",
+              "probationary": false,
+              "regime": "trend",
+              "status": "validated",
+              "strategy_id": "trend_eth_usdt_trend_1",
+              "symbol": "ETH/USDT"
+            }
+          ],
+          "risk": {
+            "approved": true,
+            "capital_multiplier": 0.5,
+            "portfolio_drawdown_pct": -10.5,
+            "reason": "volatility_throttle",
+            "rolling_loss_streak": 3,
+            "volatility_regime_score": 0.92
+          },
+          "selected_count": 3,
+          "selected_source": "validated",
+          "selected_source_count": 11,
+          "selection_reason": "validated",
+          "thin_basket_note": null,
+          "timestamp": "2026-05-19T10:10:56.351845+00:00",
+          "transition_summary": [
+            {
+              "from": "validated",
+              "reason": "fill_simulation_below_threshold",
+              "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
+              "to": "quarantined"
+            },
+            {
+              "from": "validated",
+              "reason": "fill_simulation_below_threshold",
+              "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+              "to": "quarantined"
+            },
+            {
+              "from": "validated",
+              "reason": "execution_low_fill_rate",
+              "strategy_id": "trend_eth_usdt_trend_1",
+              "to": "active"
+            }
+          ]
+        },
+        "latest_execution": {
+          "acceptance_history": [
+            {
+              "accepted": false,
+              "expected_price": 100.4395,
+              "fill_price": null,
+              "fill_ratio": 0.2355,
+              "rejection_reason": "fill_simulation_below_threshold",
+              "requested_quantity": 40.0,
+              "side": "buy",
+              "slippage_bps": null,
+              "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
+              "symbol": "BTC/USDT"
+            },
+            {
+              "accepted": false,
+              "expected_price": 107.3197,
+              "fill_price": null,
+              "fill_ratio": 0.2243,
+              "rejection_reason": "fill_simulation_below_threshold",
+              "requested_quantity": 30.8933,
+              "side": "buy",
+              "slippage_bps": null,
+              "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+              "symbol": "SOL/USDT"
+            },
+            {
+              "accepted": true,
+              "expected_price": 105.7649,
+              "fill_price": 105.7649,
+              "fill_ratio": 0.8845,
+              "rejection_reason": null,
+              "requested_quantity": 29.1067,
+              "side": "buy",
+              "slippage_bps": -0.0045,
+              "strategy_id": "trend_eth_usdt_trend_1",
+              "symbol": "ETH/USDT"
+            }
+          ],
+          "average_slippage_bps": -0.0045,
+          "capital_committed": 3078.4686,
+          "equity_after": 9996.9215,
+          "equity_before": 10000.0,
+          "execution_quality_score": 0.56666,
+          "fill_rate": 0.333333,
+          "filled_orders": 1,
+          "fills": [
+            {
+              "fill_price": 105.7649,
+              "quantity": 29.1067,
+              "side": "buy",
+              "strategy_id": "trend_eth_usdt_trend_1",
+              "symbol": "ETH/USDT"
+            }
+          ],
+          "mode": "paper",
+          "per_strategy_stats": {
+            "mean_reversion_sol_usdt_mean_reversion_2": {
+              "average_slippage_bps": 0.0,
+              "execution_quality_score": 0.45,
+              "fill_rate": 0.0,
+              "filled_orders": 0,
+              "rejected_orders": 1,
+              "requested_orders": 1
+            },
+            "trend_eth_usdt_trend_1": {
+              "average_slippage_bps": -0.0045,
+              "execution_quality_score": 0.999992,
+              "fill_rate": 1.0,
+              "filled_orders": 1,
+              "rejected_orders": 0,
+              "requested_orders": 1
+            },
+            "volatility_compression_btc_usdt_volatility_compression_2": {
+              "average_slippage_bps": 0.0,
+              "execution_quality_score": 0.45,
+              "fill_rate": 0.0,
+              "filled_orders": 0,
+              "rejected_orders": 1,
+              "requested_orders": 1
+            }
+          },
+          "rejected_orders": 2,
+          "rejection_telemetry": {
+            "reasons": {
+              "fill_simulation_below_threshold": 2
+            },
+            "total_rejections": 2,
+            "unique_strategies_rejected": 2
+          },
+          "rejections": [
+            {
+              "fill_ratio": 0.2355,
+              "reason": "fill_simulation_below_threshold",
+              "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
+              "symbol": "BTC/USDT"
+            },
+            {
+              "fill_ratio": 0.2243,
+              "reason": "fill_simulation_below_threshold",
+              "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+              "symbol": "SOL/USDT"
+            }
+          ],
+          "requested_orders": 3
+        },
+        "path": "state\\ver9_runtime_state.json",
+        "quarantined_count": 17,
+        "recovery_count": 1,
+        "retirement_count": 0,
+        "risk_event_count": 37,
+        "strategy_status_counts": {
+          "active": 10,
+          "quarantined": 11
+        }
+      },
+      "thin_basket_note": null,
+      "timestamp": "2026-05-19T10:10:56.351845+00:00",
+      "transition_summary": [
+        {
+          "from": "validated",
+          "reason": "fill_simulation_below_threshold",
+          "strategy_id": "volatility_compression_btc_usdt_volatility_compression_2",
+          "to": "quarantined"
+        },
+        {
+          "from": "validated",
+          "reason": "fill_simulation_below_threshold",
+          "strategy_id": "mean_reversion_sol_usdt_mean_reversion_2",
+          "to": "quarantined"
+        },
+        {
+          "from": "validated",
+          "reason": "execution_low_fill_rate",
+          "strategy_id": "trend_eth_usdt_trend_1",
+          "to": "active"
+        }
+      ]
+    },
+    {
+      "candidate_count": 8,
+      "candidate_source_counts": {
+        "deployable": 0,
+        "probationary": 0,
+        "validated": 8
+      },
+      "execution": {
+        "acceptance_history": [
+          {
+            "accepted": true,
+            "expected_price": 108.7384,
+            "fill_price": 108.7384,
+            "fill_ratio": 0.5085,
+            "rejection_reason": null,
+            "requested_quantity": 39.77,
+            "side": "buy",
+            "slippage_bps": 0.0039,
+            "strategy_id": "mean_reversion_sol_usdt_mean_reversion_1",
+            "symbol": "SOL/USDT"
+          },
+          {
+            "accepted": true,
+            "expected_price": 108.8071,
+            "fill_price": 108.8071,
+            "fill_ratio": 0.8774,
+            "rejection_reason": null,
+            "requested_quantity": 32.5,
+            "side": "buy",
+            "slippage_bps": 0.0036,
+            "strategy_id": "volatility_compression_eth_usdt_volatility_compression_3",
+            "symbol": "ETH/USDT"
+          },
+          {
+            "accepted": true,
+            "expected_price": 107.9124,
+            "fill_price": 107.9124,
+            "fill_ratio": 0.4989,
+            "rejection_reason": null,
+            "requested_quantity": 27.73,
+            "side": "buy",
+            "slippage_bps": 0.0006,
+            "strategy_id": "volatility_compression_btc_usdt_volatility_compression_0",
+            "symbol": "BTC/USDT"
+          }
+        ],
+        "average_slippage_bps": 0.0027,
+        "capital_committed": 10853.1646,
+        "equity_after": 9989.1468,
+        "equity_before": 10000.0,
+        "execution_quality_score": 0.999996,
+        "fill_rate": 1.0,
+        "filled_orders": 3,
+        "fills": [
+          {
+            "fill_price": 108.7384,
+            "quantity": 39.77,
+            "side": "buy",
+            "strategy_id": "mean_reversion_sol_usdt_mean_reversion_1",
+            "symbol": "SOL/USDT"
+          },
+          {
+            "fill_price": 108.8071,
+            "quantity": 32.5,
+            "side": "buy",
+            "strategy_id": "volatility_compression_eth_usdt_volatility_compression_3",
+            "symbol": "ETH/USDT"
+          },
+          {
+            "fill_price": 107.9124,
+            "quantity": 27.73,
+            "side": "buy",
+            "strategy_id": "volatility_compression_btc_usdt_volatility_compression_0",
+            "symbol": "BTC/USDT"
+          }
+        ],
+        "mode": "paper",
+        "per_strategy_stats": {
+          "mean_reversion_sol_usdt_mean_reversion_1": {
+            "average_slippage_bps": 0.0039,
+            "execution_quality_score": 0.999993,
+            "fill_rate": 1.0,
+            "filled_orders": 1,
+            "rejected_orders": 0,
+            "requested_orders": 1
+          },
+          "volatility_compression_btc_usdt_volatility_compression_0": {
+            "average_slippage_bps": 0.0006,
+            "execution_quality_score": 0.999999,
+            "fill_rate": 1.0,
+            "filled_orders": 1,
+            "rejected_orders": 0,
+            "requested_orders": 1
+          },
+          "volatility_compression_eth_usdt_volatility_compression_3": {
+            "average_slippage_bps": 0.0036,
+            "execution_quality_score": 0.999994,
+            "fill_rate": 1.0,
+            "filled_orders": 1,
+            "rejected_orders": 0,
+            "requested_orders": 1
+          }
+        },
+        "rejected_orders": 0,
+        "rejection_telemetry": {
+          "reasons": {},
+          "total_rejections": 0,
+          "unique_strategies_rejected": 0
+        },
+        "rejections": [],
+        "requested_orders": 3
+      },
+      "execution_signal": {
+        "approved": true,
+        "fill_rate": 1.0,
+        "filled_orders": 3,
+        "reason": "execution_full_fill",
+        "rejected_orders": 0
+      },
+      "portfolio": [
+        {
+          "allocation_pct": 0.3977,
+          "allocation_weight": 0.3977,
+          "basket_score": 7.9849,
+          "candidate_score": 7.8349,
+          "family": "mean_reversion",
+          "probationary": false,
+          "regime": "mean_reversion",
+          "status": "validated",
+          "strategy_id": "mean_reversion_sol_usdt_mean_reversion_1",
+          "symbol": "SOL/USDT"
+        },
+        {
+          "allocation_pct": 0.325,
+          "allocation_weight": 0.325,
+          "basket_score": 6.8591,
+          "candidate_score": 6.5991,
+          "family": "volatility_compression",
+          "probationary": false,
+          "regime": "volatility_compression",
+          "status": "validated",
+          "strategy_id": "volatility_compression_eth_usdt_volatility_compression_3",
+          "symbol": "ETH/USDT"
+        },
+        {
+          "allocation_pct": 0.2773,
+          "allocation_weight": 0.2773,
+          "basket_score": 5.8168,
+          "candidate_score": 6.2768,
+          "family": "volatility_compression",
+          "probationary": false,
+          "regime": "volatility_compression",
+          "status": "validated",
+          "strategy_id": "volatility_compression_btc_usdt_volatility_compression_0",
+          "symbol": "BTC/USDT"
+        }
+      ],
+      "risk": {
+        "approved": true,
+        "capital_multiplier": 1.0,
+        "portfolio_drawdown_pct": -1.5,
+        "reason": "approved",
+        "rolling_loss_streak": 0,
+        "volatility_regime_score": 0.4
+      },
+      "selected_count": 3,
+      "selected_source": "validated",
+      "selected_source_count": 8,
+      "selection_reason": "validated",
+      "state_summary": {
+        "cycle_count": 38,
+        "execution_count": 40,
+        "latest_cycle": {
+          "candidate_count": 8,
+          "candidate_source_counts": {
+            "deployable": 0,
+            "probationary": 0,
+            "validated": 8
+          },
+          "execution": {
+            "acceptance_history": [
+              {
+                "accepted": true,
+                "expected_price": 108.7384,
+                "fill_price": 108.7384,
+                "fill_ratio": 0.5085,
+                "rejection_reason": null,
+                "requested_quantity": 39.77,
+                "side": "buy",
+                "slippage_bps": 0.0039,
+                "strategy_id": "mean_reversion_sol_usdt_mean_reversion_1",
+                "symbol": "SOL/USDT"
+              },
+              {
+                "accepted": true,
+                "expected_price": 108.8071,
+                "fill_price": 108.8071,
+                "fill_ratio": 0.8774,
+                "rejection_reason": null,
+                "requested_quantity": 32.5,
+                "side": "buy",
+                "slippage_bps": 0.0036,
+                "strategy_id": "volatility_compression_eth_usdt_volatility_compression_3",
+                "symbol": "ETH/USDT"
+              },
+              {
+                "accepted": true,
+                "expected_price": 107.9124,
+                "fill_price": 107.9124,
+                "fill_ratio": 0.4989,
+                "rejection_reason": null,
+                "requested_quantity": 27.73,
+                "side": "buy",
+                "slippage_bps": 0.0006,
+                "strategy_id": "volatility_compression_btc_usdt_volatility_compression_0",
+                "symbol": "BTC/USDT"
+              }
+            ],
+            "average_slippage_bps": 0.0027,
+            "capital_committed": 10853.1646,
+            "equity_after": 9989.1468,
+            "equity_before": 10000.0,
+            "execution_quality_score": 0.999996,
+            "fill_rate": 1.0,
+            "filled_orders": 3,
+            "fills": [
+              {
+                "fill_price": 108.7384,
+                "quantity": 39.77,
+                "side": "buy",
+                "strategy_id": "mean_reversion_sol_usdt_mean_reversion_1",
+                "symbol": "SOL/USDT"
+              },
+              {
+                "fill_price": 108.8071,
+                "quantity": 32.5,
+                "side": "buy",
+                "strategy_id": "volatility_compression_eth_usdt_volatility_compression_3",
+                "symbol": "ETH/USDT"
+              },
+              {
+                "fill_price": 107.9124,
+                "quantity": 27.73,
+                "side": "buy",
+                "strategy_id": "volatility_compression_btc_usdt_volatility_compression_0",
+                "symbol": "BTC/USDT"
+              }
+            ],
+            "mode": "paper",
+            "per_strategy_stats": {
+              "mean_reversion_sol_usdt_mean_reversion_1": {
+                "average_slippage_bps": 0.0039,
+                "execution_quality_score": 0.999993,
+                "fill_rate": 1.0,
+                "filled_orders": 1,
+                "rejected_orders": 0,
+                "requested_orders": 1
+              },
+              "volatility_compression_btc_usdt_volatility_compression_0": {
+                "average_slippage_bps": 0.0006,
+                "execution_quality_score": 0.999999,
+                "fill_rate": 1.0,
+                "filled_orders": 1,
+                "rejected_orders": 0,
+                "requested_orders": 1
+              },
+              "volatility_compression_eth_usdt_volatility_compression_3": {
+                "average_slippage_bps": 0.0036,
+                "execution_quality_score": 0.999994,
+                "fill_rate": 1.0,
+                "filled_orders": 1,
+                "rejected_orders": 0,
+                "requested_orders": 1
+              }
+            },
+            "rejected_orders": 0,
+            "rejection_telemetry": {
+              "reasons": {},
+              "total_rejections": 0,
+              "unique_strategies_rejected": 0
+            },
+            "rejections": [],
+            "requested_orders": 3
+          },
+          "execution_signal": {
+            "approved": true,
+            "fill_rate": 1.0,
+            "filled_orders": 3,
+            "reason": "execution_full_fill",
+            "rejected_orders": 0
+          },
+          "portfolio": [
+            {
+              "allocation_pct": 0.3977,
+              "allocation_weight": 0.3977,
+              "basket_score": 7.9849,
+              "candidate_score": 7.8349,
+              "family": "mean_reversion",
+              "probationary": false,
+              "regime": "mean_reversion",
+              "status": "validated",
+              "strategy_id": "mean_reversion_sol_usdt_mean_reversion_1",
+              "symbol": "SOL/USDT"
+            },
+            {
+              "allocation_pct": 0.325,
+              "allocation_weight": 0.325,
+              "basket_score": 6.8591,
+              "candidate_score": 6.5991,
+              "family": "volatility_compression",
+              "probationary": false,
+              "regime": "volatility_compression",
+              "status": "validated",
+              "strategy_id": "volatility_compression_eth_usdt_volatility_compression_3",
+              "symbol": "ETH/USDT"
+            },
+            {
+              "allocation_pct": 0.2773,
+              "allocation_weight": 0.2773,
+              "basket_score": 5.8168,
+              "candidate_score": 6.2768,
+              "family": "volatility_compression",
+              "probationary": false,
+              "regime": "volatility_compression",
+              "status": "validated",
+              "strategy_id": "volatility_compression_btc_usdt_volatility_compression_0",
+              "symbol": "BTC/USDT"
+            }
+          ],
+          "risk": {
+            "approved": true,
+            "capital_multiplier": 1.0,
+            "portfolio_drawdown_pct": -1.5,
+            "reason": "approved",
+            "rolling_loss_streak": 0,
+            "volatility_regime_score": 0.4
+          },
+          "selected_count": 3,
+          "selected_source": "validated",
+          "selected_source_count": 8,
+          "selection_reason": "validated",
+          "thin_basket_note": null,
+          "timestamp": "2026-05-19T10:11:01.784128+00:00",
+          "transition_summary": [
+            {
+              "from": "validated",
+              "reason": "execution_full_fill",
+              "strategy_id": "mean_reversion_sol_usdt_mean_reversion_1",
+              "to": "active"
+            },
+            {
+              "from": "validated",
+              "reason": "execution_full_fill",
+              "strategy_id": "volatility_compression_eth_usdt_volatility_compression_3",
+              "to": "quarantined"
+            },
+            {
+              "from": "validated",
+              "reason": "execution_full_fill",
+              "strategy_id": "volatility_compression_btc_usdt_volatility_compression_0",
+              "to": "active"
+            }
+          ]
+        },
+        "latest_execution": {
+          "acceptance_history": [
+            {
+              "accepted": true,
+              "expected_price": 108.7384,
+              "fill_price": 108.7384,
+              "fill_ratio": 0.5085,
+              "rejection_reason": null,
+              "requested_quantity": 39.77,
+              "side": "buy",
+              "slippage_bps": 0.0039,
+              "strategy_id": "mean_reversion_sol_usdt_mean_reversion_1",
+              "symbol": "SOL/USDT"
+            },
+            {
+              "accepted": true,
+              "expected_price": 108.8071,
+              "fill_price": 108.8071,
+              "fill_ratio": 0.8774,
+              "rejection_reason": null,
+              "requested_quantity": 32.5,
+              "side": "buy",
+              "slippage_bps": 0.0036,
+              "strategy_id": "volatility_compression_eth_usdt_volatility_compression_3",
+              "symbol": "ETH/USDT"
+            },
+            {
+              "accepted": true,
+              "expected_price": 107.9124,
+              "fill_price": 107.9124,
+              "fill_ratio": 0.4989,
+              "rejection_reason": null,
+              "requested_quantity": 27.73,
+              "side": "buy",
+              "slippage_bps": 0.0006,
+              "strategy_id": "volatility_compression_btc_usdt_volatility_compression_0",
+              "symbol": "BTC/USDT"
+            }
+          ],
+          "average_slippage_bps": 0.0027,
+          "capital_committed": 10853.1646,
+          "equity_after": 9989.1468,
+          "equity_before": 10000.0,
+          "execution_quality_score": 0.999996,
+          "fill_rate": 1.0,
+          "filled_orders": 3,
+          "fills": [
+            {
+              "fill_price": 108.7384,
+              "quantity": 39.77,
+              "side": "buy",
+              "strategy_id": "mean_reversion_sol_usdt_mean_reversion_1",
+              "symbol": "SOL/USDT"
+            },
+            {
+              "fill_price": 108.8071,
+              "quantity": 32.5,
+              "side": "buy",
+              "strategy_id": "volatility_compression_eth_usdt_volatility_compression_3",
+              "symbol": "ETH/USDT"
+            },
+            {
+              "fill_price": 107.9124,
+              "quantity": 27.73,
+              "side": "buy",
+              "strategy_id": "volatility_compression_btc_usdt_volatility_compression_0",
+              "symbol": "BTC/USDT"
+            }
+          ],
+          "mode": "paper",
+          "per_strategy_stats": {
+            "mean_reversion_sol_usdt_mean_reversion_1": {
+              "average_slippage_bps": 0.0039,
+              "execution_quality_score": 0.999993,
+              "fill_rate": 1.0,
+              "filled_orders": 1,
+              "rejected_orders": 0,
+              "requested_orders": 1
+            },
+            "volatility_compression_btc_usdt_volatility_compression_0": {
+              "average_slippage_bps": 0.0006,
+              "execution_quality_score": 0.999999,
+              "fill_rate": 1.0,
+              "filled_orders": 1,
+              "rejected_orders": 0,
+              "requested_orders": 1
+            },
+            "volatility_compression_eth_usdt_volatility_compression_3": {
+              "average_slippage_bps": 0.0036,
+              "execution_quality_score": 0.999994,
+              "fill_rate": 1.0,
+              "filled_orders": 1,
+              "rejected_orders": 0,
+              "requested_orders": 1
+            }
+          },
+          "rejected_orders": 0,
+          "rejection_telemetry": {
+            "reasons": {},
+            "total_rejections": 0,
+            "unique_strategies_rejected": 0
+          },
+          "rejections": [],
+          "requested_orders": 3
+        },
+        "path": "state\\ver9_runtime_state.json",
+        "quarantined_count": 17,
+        "recovery_count": 1,
+        "retirement_count": 0,
+        "risk_event_count": 38,
+        "strategy_status_counts": {
+          "active": 10,
+          "quarantined": 11
+        }
+      },
+      "thin_basket_note": null,
+      "timestamp": "2026-05-19T10:11:01.784128+00:00",
+      "transition_summary": [
+        {
+          "from": "validated",
+          "reason": "execution_full_fill",
+          "strategy_id": "mean_reversion_sol_usdt_mean_reversion_1",
+          "to": "active"
+        },
+        {
+          "from": "validated",
+          "reason": "execution_full_fill",
+          "strategy_id": "volatility_compression_eth_usdt_volatility_compression_3",
+          "to": "quarantined"
+        },
+        {
+          "from": "validated",
+          "reason": "execution_full_fill",
+          "strategy_id": "volatility_compression_btc_usdt_volatility_compression_0",
+          "to": "active"
+        }
+      ]
+    },
+    {
+      "candidate_count": 5,
+      "candidate_source_counts": {
+        "deployable": 0,
+        "probationary": 0,
+        "validated": 5
+      },
+      "execution": {
+        "acceptance_history": [
+          {
+            "accepted": false,
+            "expected_price": 106.222,
+            "fill_price": null,
+            "fill_ratio": 0.1223,
+            "rejection_reason": "fill_simulation_below_threshold",
+            "requested_quantity": 32.5,
+            "side": "buy",
+            "slippage_bps": null,
+            "strategy_id": "trend_eth_usdt_trend_0",
+            "symbol": "ETH/USDT"
+          },
+          {
+            "accepted": true,
+            "expected_price": 108.2558,
+            "fill_price": 108.2558,
+            "fill_ratio": 0.7178,
+            "rejection_reason": null,
+            "requested_quantity": 32.5,
+            "side": "buy",
+            "slippage_bps": -0.0008,
+            "strategy_id": "trend_sol_usdt_trend_0",
+            "symbol": "SOL/USDT"
+          }
+        ],
+        "average_slippage_bps": -0.0008,
+        "capital_committed": 3518.3138,
+        "equity_after": 9996.4817,
+        "equity_before": 10000.0,
+        "execution_quality_score": 0.674999,
+        "fill_rate": 0.5,
+        "filled_orders": 1,
+        "fills": [
+          {
+            "fill_price": 108.2558,
+            "quantity": 32.5,
+            "side": "buy",
+            "strategy_id": "trend_sol_usdt_trend_0",
+            "symbol": "SOL/USDT"
+          }
+        ],
+        "mode": "paper",
+        "per_strategy_stats": {
+          "trend_eth_usdt_trend_0": {
+            "average_slippage_bps": 0.0,
+            "execution_quality_score": 0.45,
+            "fill_rate": 0.0,
+            "filled_orders": 0,
+            "rejected_orders": 1,
+            "requested_orders": 1
+          },
+          "trend_sol_usdt_trend_0": {
+            "average_slippage_bps": -0.0008,
+            "execution_quality_score": 0.999999,
+            "fill_rate": 1.0,
+            "filled_orders": 1,
+            "rejected_orders": 0,
+            "requested_orders": 1
+          }
+        },
+        "rejected_orders": 1,
+        "rejection_telemetry": {
+          "reasons": {
+            "fill_simulation_below_threshold": 1
+          },
+          "total_rejections": 1,
+          "unique_strategies_rejected": 1
+        },
+        "rejections": [
+          {
+            "fill_ratio": 0.1223,
+            "reason": "fill_simulation_below_threshold",
+            "strategy_id": "trend_eth_usdt_trend_0",
+            "symbol": "ETH/USDT"
+          }
+        ],
+        "requested_orders": 2
+      },
+      "execution_signal": {
+        "approved": true,
+        "fill_rate": 0.5,
+        "filled_orders": 1,
+        "reason": "execution_partial_fill",
+        "rejected_orders": 1
+      },
+      "portfolio": [
+        {
+          "allocation_pct": 0.325,
+          "allocation_weight": 0.325,
+          "basket_score": 6.3959,
+          "candidate_score": 6.2459,
+          "family": "trend",
+          "probationary": false,
+          "regime": "trend",
+          "status": "validated",
+          "strategy_id": "trend_eth_usdt_trend_0",
+          "symbol": "ETH/USDT"
+        },
+        {
+          "allocation_pct": 0.325,
+          "allocation_weight": 0.325,
+          "basket_score": 5.1592,
+          "candidate_score": 5.5392,
+          "family": "trend",
+          "probationary": false,
+          "regime": "trend",
+          "status": "validated",
+          "strategy_id": "trend_sol_usdt_trend_0",
+          "symbol": "SOL/USDT"
+        }
+      ],
+      "risk": {
+        "approved": true,
+        "capital_multiplier": 1.0,
+        "portfolio_drawdown_pct": -4.5,
+        "reason": "approved",
+        "rolling_loss_streak": 1,
+        "volatility_regime_score": 0.62
+      },
+      "selected_count": 2,
+      "selected_source": "validated",
+      "selected_source_count": 5,
+      "selection_reason": "validated",
+      "state_summary": {
+        "cycle_count": 39,
+        "execution_count": 41,
+        "latest_cycle": {
+          "candidate_count": 5,
+          "candidate_source_counts": {
+            "deployable": 0,
+            "probationary": 0,
+            "validated": 5
+          },
+          "execution": {
+            "acceptance_history": [
+              {
+                "accepted": false,
+                "expected_price": 106.222,
+                "fill_price": null,
+                "fill_ratio": 0.1223,
+                "rejection_reason": "fill_simulation_below_threshold",
+                "requested_quantity": 32.5,
+                "side": "buy",
+                "slippage_bps": null,
+                "strategy_id": "trend_eth_usdt_trend_0",
+                "symbol": "ETH/USDT"
+              },
+              {
+                "accepted": true,
+                "expected_price": 108.2558,
+                "fill_price": 108.2558,
+                "fill_ratio": 0.7178,
+                "rejection_reason": null,
+                "requested_quantity": 32.5,
+                "side": "buy",
+                "slippage_bps": -0.0008,
+                "strategy_id": "trend_sol_usdt_trend_0",
+                "symbol": "SOL/USDT"
+              }
+            ],
+            "average_slippage_bps": -0.0008,
+            "capital_committed": 3518.3138,
+            "equity_after": 9996.4817,
+            "equity_before": 10000.0,
+            "execution_quality_score": 0.674999,
+            "fill_rate": 0.5,
+            "filled_orders": 1,
+            "fills": [
+              {
+                "fill_price": 108.2558,
+                "quantity": 32.5,
+                "side": "buy",
+                "strategy_id": "trend_sol_usdt_trend_0",
+                "symbol": "SOL/USDT"
+              }
+            ],
+            "mode": "paper",
+            "per_strategy_stats": {
+              "trend_eth_usdt_trend_0": {
+                "average_slippage_bps": 0.0,
+                "execution_quality_score": 0.45,
+                "fill_rate": 0.0,
+                "filled_orders": 0,
+                "rejected_orders": 1,
+                "requested_orders": 1
+              },
+              "trend_sol_usdt_trend_0": {
+                "average_slippage_bps": -0.0008,
+                "execution_quality_score": 0.999999,
+                "fill_rate": 1.0,
+                "filled_orders": 1,
+                "rejected_orders": 0,
+                "requested_orders": 1
+              }
+            },
+            "rejected_orders": 1,
+            "rejection_telemetry": {
+              "reasons": {
+                "fill_simulation_below_threshold": 1
+              },
+              "total_rejections": 1,
+              "unique_strategies_rejected": 1
+            },
+            "rejections": [
+              {
+                "fill_ratio": 0.1223,
+                "reason": "fill_simulation_below_threshold",
+                "strategy_id": "trend_eth_usdt_trend_0",
+                "symbol": "ETH/USDT"
+              }
+            ],
+            "requested_orders": 2
+          },
+          "execution_signal": {
+            "approved": true,
+            "fill_rate": 0.5,
+            "filled_orders": 1,
+            "reason": "execution_partial_fill",
+            "rejected_orders": 1
+          },
+          "portfolio": [
+            {
+              "allocation_pct": 0.325,
+              "allocation_weight": 0.325,
+              "basket_score": 6.3959,
+              "candidate_score": 6.2459,
+              "family": "trend",
+              "probationary": false,
+              "regime": "trend",
+              "status": "validated",
+              "strategy_id": "trend_eth_usdt_trend_0",
+              "symbol": "ETH/USDT"
+            },
+            {
+              "allocation_pct": 0.325,
+              "allocation_weight": 0.325,
+              "basket_score": 5.1592,
+              "candidate_score": 5.5392,
+              "family": "trend",
+              "probationary": false,
+              "regime": "trend",
+              "status": "validated",
+              "strategy_id": "trend_sol_usdt_trend_0",
+              "symbol": "SOL/USDT"
+            }
+          ],
+          "risk": {
+            "approved": true,
+            "capital_multiplier": 1.0,
+            "portfolio_drawdown_pct": -4.5,
+            "reason": "approved",
+            "rolling_loss_streak": 1,
+            "volatility_regime_score": 0.62
+          },
+          "selected_count": 2,
+          "selected_source": "validated",
+          "selected_source_count": 5,
+          "selection_reason": "validated",
+          "thin_basket_note": null,
+          "timestamp": "2026-05-19T10:11:07.145729+00:00",
+          "transition_summary": [
+            {
+              "from": "validated",
+              "reason": "fill_simulation_below_threshold",
+              "strategy_id": "trend_eth_usdt_trend_0",
+              "to": "quarantined"
+            },
+            {
+              "from": "validated",
+              "reason": "execution_partial_fill",
+              "strategy_id": "trend_sol_usdt_trend_0",
+              "to": "active"
+            }
+          ]
+        },
+        "latest_execution": {
+          "acceptance_history": [
+            {
+              "accepted": false,
+              "expected_price": 106.222,
+              "fill_price": null,
+              "fill_ratio": 0.1223,
+              "rejection_reason": "fill_simulation_below_threshold",
+              "requested_quantity": 32.5,
+              "side": "buy",
+              "slippage_bps": null,
+              "strategy_id": "trend_eth_usdt_trend_0",
+              "symbol": "ETH/USDT"
+            },
+            {
+              "accepted": true,
+              "expected_price": 108.2558,
+              "fill_price": 108.2558,
+              "fill_ratio": 0.7178,
+              "rejection_reason": null,
+              "requested_quantity": 32.5,
+              "side": "buy",
+              "slippage_bps": -0.0008,
+              "strategy_id": "trend_sol_usdt_trend_0",
+              "symbol": "SOL/USDT"
+            }
+          ],
+          "average_slippage_bps": -0.0008,
+          "capital_committed": 3518.3138,
+          "equity_after": 9996.4817,
+          "equity_before": 10000.0,
+          "execution_quality_score": 0.674999,
+          "fill_rate": 0.5,
+          "filled_orders": 1,
+          "fills": [
+            {
+              "fill_price": 108.2558,
+              "quantity": 32.5,
+              "side": "buy",
+              "strategy_id": "trend_sol_usdt_trend_0",
+              "symbol": "SOL/USDT"
+            }
+          ],
+          "mode": "paper",
+          "per_strategy_stats": {
+            "trend_eth_usdt_trend_0": {
+              "average_slippage_bps": 0.0,
+              "execution_quality_score": 0.45,
+              "fill_rate": 0.0,
+              "filled_orders": 0,
+              "rejected_orders": 1,
+              "requested_orders": 1
+            },
+            "trend_sol_usdt_trend_0": {
+              "average_slippage_bps": -0.0008,
+              "execution_quality_score": 0.999999,
+              "fill_rate": 1.0,
+              "filled_orders": 1,
+              "rejected_orders": 0,
+              "requested_orders": 1
+            }
+          },
+          "rejected_orders": 1,
+          "rejection_telemetry": {
+            "reasons": {
+              "fill_simulation_below_threshold": 1
+            },
+            "total_rejections": 1,
+            "unique_strategies_rejected": 1
+          },
+          "rejections": [
+            {
+              "fill_ratio": 0.1223,
+              "reason": "fill_simulation_below_threshold",
+              "strategy_id": "trend_eth_usdt_trend_0",
+              "symbol": "ETH/USDT"
+            }
+          ],
+          "requested_orders": 2
+        },
+        "path": "state\\ver9_runtime_state.json",
+        "quarantined_count": 18,
+        "recovery_count": 1,
+        "retirement_count": 0,
+        "risk_event_count": 39,
+        "strategy_status_counts": {
+          "active": 10,
+          "quarantined": 11
+        }
+      },
+      "thin_basket_note": null,
+      "timestamp": "2026-05-19T10:11:07.145729+00:00",
+      "transition_summary": [
+        {
+          "from": "validated",
+          "reason": "fill_simulation_below_threshold",
+          "strategy_id": "trend_eth_usdt_trend_0",
+          "to": "quarantined"
+        },
+        {
+          "from": "validated",
+          "reason": "execution_partial_fill",
+          "strategy_id": "trend_sol_usdt_trend_0",
+          "to": "active"
+        }
+      ]
+    }
+  ],
+  "mode": "continuous"
 }
 [exit_code=0]
 
@@ -4664,8 +6460,8 @@ Command: python main.py distributed-evolve --iterations 20 --worker-count 4 --ba
   "max_workers": 4,
   "portfolio": [
     {
-      "allocation_pct": 0.3,
-      "allocation_weight": 0.3,
+      "allocation_pct": 0.4,
+      "allocation_weight": 0.4,
       "basket_score": 3.6194,
       "candidate_score": 3.4694,
       "family": "volatility_compression",
@@ -4676,9 +6472,9 @@ Command: python main.py distributed-evolve --iterations 20 --worker-count 4 --ba
       "symbol": "BTC/USDT"
     },
     {
-      "allocation_pct": 0.3,
-      "allocation_weight": 0.3,
-      "basket_score": 2.2279,
+      "allocation_pct": 0.31183,
+      "allocation_weight": 0.31183,
+      "basket_score": 1.9879,
       "candidate_score": 1.7279,
       "family": "mean_reversion",
       "probationary": false,
@@ -4688,9 +6484,9 @@ Command: python main.py distributed-evolve --iterations 20 --worker-count 4 --ba
       "symbol": "SOL/USDT"
     },
     {
-      "allocation_pct": 0.3,
-      "allocation_weight": 0.3,
-      "basket_score": 1.9687,
+      "allocation_pct": 0.28817,
+      "allocation_weight": 0.28817,
+      "basket_score": 1.7487,
       "candidate_score": 1.5687,
       "family": "trend",
       "probationary": false,
@@ -4707,7 +6503,7 @@ Command: python main.py distributed-evolve --iterations 20 --worker-count 4 --ba
 }
 [exit_code=0]
 
------ protectons -----
+----- protections -----
 Command: python main.py protections
 {
   "approved": true,
@@ -4726,9 +6522,11 @@ Command: python main.py registry-summary
     "volatility_compression": 22
   },
   "by_status": {
+    "active": 3,
     "candidate": 45,
-    "deployable": 3,
-    "probationary": 14
+    "deployable": 1,
+    "probationary": 7,
+    "quarantined": 6
   },
   "count": 62,
   "path": "registry\\ver9_registry.json",
@@ -4739,38 +6537,249 @@ Command: python main.py registry-summary
 ----- state -----
 Command: python main.py state
 {
-  "cycle_count": 0,
-  "execution_count": 2,
-  "latest_cycle": {},
-  "latest_execution": {
-    "acceptance_history": [],
-    "average_slippage_bps": 0.0,
-    "capital_committed": 0.0,
-    "equity_after": 10000.0,
-    "equity_before": 10000.0,
-    "fill_rate": 0.0,
-    "filled_orders": 0,
-    "fills": [],
-    "mode": "paper",
-    "per_strategy_stats": {},
-    "rejected_orders": 0,
-    "rejection_telemetry": {
-      "reasons": {},
-      "total_rejections": 0,
-      "unique_strategies_rejected": 0
+  "cycle_count": 39,
+  "execution_count": 41,
+  "latest_cycle": {
+    "candidate_count": 5,
+    "candidate_source_counts": {
+      "deployable": 0,
+      "probationary": 0,
+      "validated": 5
     },
-    "rejections": [],
-    "requested_orders": 0
+    "execution": {
+      "acceptance_history": [
+        {
+          "accepted": false,
+          "expected_price": 106.222,
+          "fill_price": null,
+          "fill_ratio": 0.1223,
+          "rejection_reason": "fill_simulation_below_threshold",
+          "requested_quantity": 32.5,
+          "side": "buy",
+          "slippage_bps": null,
+          "strategy_id": "trend_eth_usdt_trend_0",
+          "symbol": "ETH/USDT"
+        },
+        {
+          "accepted": true,
+          "expected_price": 108.2558,
+          "fill_price": 108.2558,
+          "fill_ratio": 0.7178,
+          "rejection_reason": null,
+          "requested_quantity": 32.5,
+          "side": "buy",
+          "slippage_bps": -0.0008,
+          "strategy_id": "trend_sol_usdt_trend_0",
+          "symbol": "SOL/USDT"
+        }
+      ],
+      "average_slippage_bps": -0.0008,
+      "capital_committed": 3518.3138,
+      "equity_after": 9996.4817,
+      "equity_before": 10000.0,
+      "execution_quality_score": 0.674999,
+      "fill_rate": 0.5,
+      "filled_orders": 1,
+      "fills": [
+        {
+          "fill_price": 108.2558,
+          "quantity": 32.5,
+          "side": "buy",
+          "strategy_id": "trend_sol_usdt_trend_0",
+          "symbol": "SOL/USDT"
+        }
+      ],
+      "mode": "paper",
+      "per_strategy_stats": {
+        "trend_eth_usdt_trend_0": {
+          "average_slippage_bps": 0.0,
+          "execution_quality_score": 0.45,
+          "fill_rate": 0.0,
+          "filled_orders": 0,
+          "rejected_orders": 1,
+          "requested_orders": 1
+        },
+        "trend_sol_usdt_trend_0": {
+          "average_slippage_bps": -0.0008,
+          "execution_quality_score": 0.999999,
+          "fill_rate": 1.0,
+          "filled_orders": 1,
+          "rejected_orders": 0,
+          "requested_orders": 1
+        }
+      },
+      "rejected_orders": 1,
+      "rejection_telemetry": {
+        "reasons": {
+          "fill_simulation_below_threshold": 1
+        },
+        "total_rejections": 1,
+        "unique_strategies_rejected": 1
+      },
+      "rejections": [
+        {
+          "fill_ratio": 0.1223,
+          "reason": "fill_simulation_below_threshold",
+          "strategy_id": "trend_eth_usdt_trend_0",
+          "symbol": "ETH/USDT"
+        }
+      ],
+      "requested_orders": 2
+    },
+    "execution_signal": {
+      "approved": true,
+      "fill_rate": 0.5,
+      "filled_orders": 1,
+      "reason": "execution_partial_fill",
+      "rejected_orders": 1
+    },
+    "portfolio": [
+      {
+        "allocation_pct": 0.325,
+        "allocation_weight": 0.325,
+        "basket_score": 6.3959,
+        "candidate_score": 6.2459,
+        "family": "trend",
+        "probationary": false,
+        "regime": "trend",
+        "status": "validated",
+        "strategy_id": "trend_eth_usdt_trend_0",
+        "symbol": "ETH/USDT"
+      },
+      {
+        "allocation_pct": 0.325,
+        "allocation_weight": 0.325,
+        "basket_score": 5.1592,
+        "candidate_score": 5.5392,
+        "family": "trend",
+        "probationary": false,
+        "regime": "trend",
+        "status": "validated",
+        "strategy_id": "trend_sol_usdt_trend_0",
+        "symbol": "SOL/USDT"
+      }
+    ],
+    "risk": {
+      "approved": true,
+      "capital_multiplier": 1.0,
+      "portfolio_drawdown_pct": -4.5,
+      "reason": "approved",
+      "rolling_loss_streak": 1,
+      "volatility_regime_score": 0.62
+    },
+    "selected_count": 2,
+    "selected_source": "validated",
+    "selected_source_count": 5,
+    "selection_reason": "validated",
+    "thin_basket_note": null,
+    "timestamp": "2026-05-19T10:11:07.145729+00:00",
+    "transition_summary": [
+      {
+        "from": "validated",
+        "reason": "fill_simulation_below_threshold",
+        "strategy_id": "trend_eth_usdt_trend_0",
+        "to": "quarantined"
+      },
+      {
+        "from": "validated",
+        "reason": "execution_partial_fill",
+        "strategy_id": "trend_sol_usdt_trend_0",
+        "to": "active"
+      }
+    ]
+  },
+  "latest_execution": {
+    "acceptance_history": [
+      {
+        "accepted": false,
+        "expected_price": 106.222,
+        "fill_price": null,
+        "fill_ratio": 0.1223,
+        "rejection_reason": "fill_simulation_below_threshold",
+        "requested_quantity": 32.5,
+        "side": "buy",
+        "slippage_bps": null,
+        "strategy_id": "trend_eth_usdt_trend_0",
+        "symbol": "ETH/USDT"
+      },
+      {
+        "accepted": true,
+        "expected_price": 108.2558,
+        "fill_price": 108.2558,
+        "fill_ratio": 0.7178,
+        "rejection_reason": null,
+        "requested_quantity": 32.5,
+        "side": "buy",
+        "slippage_bps": -0.0008,
+        "strategy_id": "trend_sol_usdt_trend_0",
+        "symbol": "SOL/USDT"
+      }
+    ],
+    "average_slippage_bps": -0.0008,
+    "capital_committed": 3518.3138,
+    "equity_after": 9996.4817,
+    "equity_before": 10000.0,
+    "execution_quality_score": 0.674999,
+    "fill_rate": 0.5,
+    "filled_orders": 1,
+    "fills": [
+      {
+        "fill_price": 108.2558,
+        "quantity": 32.5,
+        "side": "buy",
+        "strategy_id": "trend_sol_usdt_trend_0",
+        "symbol": "SOL/USDT"
+      }
+    ],
+    "mode": "paper",
+    "per_strategy_stats": {
+      "trend_eth_usdt_trend_0": {
+        "average_slippage_bps": 0.0,
+        "execution_quality_score": 0.45,
+        "fill_rate": 0.0,
+        "filled_orders": 0,
+        "rejected_orders": 1,
+        "requested_orders": 1
+      },
+      "trend_sol_usdt_trend_0": {
+        "average_slippage_bps": -0.0008,
+        "execution_quality_score": 0.999999,
+        "fill_rate": 1.0,
+        "filled_orders": 1,
+        "rejected_orders": 0,
+        "requested_orders": 1
+      }
+    },
+    "rejected_orders": 1,
+    "rejection_telemetry": {
+      "reasons": {
+        "fill_simulation_below_threshold": 1
+      },
+      "total_rejections": 1,
+      "unique_strategies_rejected": 1
+    },
+    "rejections": [
+      {
+        "fill_ratio": 0.1223,
+        "reason": "fill_simulation_below_threshold",
+        "strategy_id": "trend_eth_usdt_trend_0",
+        "symbol": "ETH/USDT"
+      }
+    ],
+    "requested_orders": 2
   },
   "path": "state\\ver9_runtime_state.json",
-  "quarantined_count": 0,
-  "recovery_count": 0,
+  "quarantined_count": 18,
+  "recovery_count": 1,
   "retirement_count": 0,
-  "risk_event_count": 0,
-  "strategy_status_counts": {}
+  "risk_event_count": 39,
+  "strategy_status_counts": {
+    "active": 10,
+    "quarantined": 11
+  }
 }
 [exit_code=0]
 
 
 ===== RUN END =====
-overall_status=0
+overall_status=1
