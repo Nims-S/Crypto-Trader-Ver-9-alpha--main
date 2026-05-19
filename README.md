@@ -1,223 +1,344 @@
-# Crypto-Trader-Ver-9-alpha-
+# Crypto-Trader-Ver-9-alpha
 
-Version 9 is the infrastructure-hardening evolution of the adaptive trading research platform.
+Ver9 is transitioning from a synthetic strategy research shell into a real quantitative research and portfolio experimentation platform.
 
-## Mission
+The project now contains:
+- real market data ingestion
+- real strategy execution
+- real backtesting
+- portfolio-level simulation
+- walk-forward validation
+- experiment tracking
+- regime classification
+- typed runtime infrastructure
 
-Preserve the adaptive research strengths of Ver8 while adding institutional-grade operational discipline inspired by platforms like Freqtrade.
+It is NOT yet a production trading system.
 
-The objective is not to replace the adaptive architecture.
-The objective is to harden it.
+The current focus is:
+building reliable research infrastructure before autonomous optimization.
 
 ---
 
-# Version 9 Architecture
+# Current System State
 
-## 1. Research Engine
+## What Is Real
 
-### Existing Strengths Being Carried Forward
+### Research Infrastructure
 
-- Evolutionary strategy generation
-- Regime-aware mutation
-- Monte Carlo robustness validation
+Implemented:
+
+- Typed runtime models
+- Typed lifecycle transitions
+- Portfolio allocation engine
+- Strategy registry persistence
+- Quarantine/recovery lifecycle system
+- Execution telemetry
+- Experiment tracking
+- Experiment ranking
+- Regime-aware strategy routing
+
+---
+
+### Real Market Data Pipeline
+
+Implemented:
+
+```text
+Binance OHLCV download
+→ normalization
+→ validation
+→ parquet persistence
+→ research engine
+```
+
+Current components:
+
+```text
+ver9/research/data/connectors/binance.py
+ver9/research/data/validation.py
+ver9/research/data/market_data.py
+```
+
+Capabilities:
+
+- Binance historical downloads
+- Incremental dataset merging
+- Timestamp normalization
+- Deduplication
+- Data integrity validation
+- Parquet storage
+
+---
+
+### Real Strategy Framework
+
+Implemented:
+
+```text
+ver9/research/strategies/
+```
+
+Current strategies:
+
+#### SMA Cross Baseline
+
+Purpose:
+- benchmark strategy
+- regression sanity check
+- trend-following baseline
+
+#### Lorentzian Classification Strategy
+
+Current implementation includes:
+
+- RSI features
+- CCI features
+- ROC features
+- Lorentzian distance metric
+- nearest-neighbor classification
+- EMA trend filtering
+- anti-leakage future labeling
+
+Important:
+This is a research hypothesis engine.
+Not validated alpha.
+
+---
+
+### Backtesting Infrastructure
+
+Implemented:
+
+```text
+ver9/research/backtesting/
+```
+
+Capabilities:
+
+- Strategy-level backtesting
+- Portfolio-level backtesting
+- Shared capital simulation
+- Exposure constraints
+- Confidence-weighted sizing
+- Fee modeling
+- Slippage modeling
 - Walk-forward validation
-- Perturbation testing
-- Cross-symbol validation
-- Survivor registry persistence
-- Portfolio-aware ranking
-- Live strategy routing
+
+Portfolio engine currently supports:
+
+- multiple concurrent strategies
+- capital contention
+- exposure caps
+- portfolio equity curves
+- portfolio-level Sharpe/drawdown metrics
 
 ---
 
-## 2. Pair Universe Manager (NEW)
+### Experiment Tracking
 
-Purpose:
-Reduce wasted research cycles and improve survivor quality.
+Implemented:
 
-### Features
+```text
+ver9/research/experiments/
+```
 
-- Liquidity filters
-- Spread filters
-- Volatility filters
-- Symbol health scoring
-- Pair rotation
-- Regime-specific symbol selection
-- Exchange quality filters
+Capabilities:
 
-### Expected Benefits
-
-- Higher survivor density
-- Fewer dead evolution cycles
-- More deployable ETH/SOL candidates
-- Better live tradability
-
----
-
-## 3. Protection Engine (NEW)
-
-Purpose:
-Prevent portfolio-level catastrophic behavior.
-
-### Planned Protections
-
-- Portfolio drawdown kill switch
-- Rolling loss-streak cooldowns
-- Regime-aware leverage throttles
-- Volatility shock controls
-- Exposure concentration limits
-- Strategy quarantine after drift
-- Correlation shock protection
-
-### Deployment Lifecycle
-
-candidate
-→ validated
-→ probationary
-→ deployable
-→ live
-→ quarantined
-
----
-
-## 4. Typed Mutation System (NEW)
-
-Purpose:
-Increase research efficiency and survivor density.
-
-### Mean-Reversion Mutation Space
-
-- z-score windows
-- reclaim thresholds
-- volatility bands
-- re-entry timing
-- compression sensitivity
-
-### Trend Mutation Space
-
-- breakout persistence
-- ATR multipliers
-- momentum persistence
-- continuation filters
-
-### Volatility Compression Mutation Space
-
-- squeeze thresholds
-- expansion timing
-- breakout volatility gates
-
-### Expected Benefits
-
-- Smarter evolution
-- Fewer random mutations
-- More durable survivors
-- Faster adaptive convergence
-
----
-
-## 5. Artifact + Replay Engine (NEW)
-
-Every evolution cycle will emit:
-
-- configuration snapshot
-- selected portfolio basket
-- Monte Carlo summaries
+- experiment persistence
+- parameter lineage
+- metric lineage
 - walk-forward summaries
-- perturbation summaries
-- deployment state
-- live routing state
-- regime snapshot
-- allocation snapshot
+- ranking/scoring
+- reproducible experiment snapshots
+- atomic save semantics
 
-### Goals
-
-- deterministic replay
-- auditability
-- research reproducibility
-- rollback safety
+This is the foundation for future:
+- hyperparameter optimization
+- distributed research
+- meta-learning
+- adaptive strategy governance
 
 ---
 
-## 6. Portfolio Engine Expansion
+### Market Regime Infrastructure
 
-### Planned Improvements
+Implemented:
 
-- Rolling covariance models
-- Dynamic volatility targeting
-- Risk-budget allocation
-- Marginal drawdown contribution scoring
-- Correlation-aware penalties
-- Adaptive capital throttling
-- Regime-aware portfolio scaling
+```text
+ver9/research/regime/
+```
 
----
+Capabilities:
 
-## 7. Live Execution Hardening
+- volatility regime classification
+- trend regime classification
+- liquidity regime classification
+- adaptive strategy routing
+- strategy enable/disable gating
+- regime-aware allocation scaling
 
-### Planned Improvements
-
-- Exchange failure handling
-- Order reconciliation
-- Persistent execution state
-- Portfolio risk daemon
-- Drift monitoring
-- Execution analytics
-- Event replay support
-- Latency-aware routing
+Current regime model is heuristic-based.
+Not institutional-grade state inference.
 
 ---
 
-# Version 9 Phase Plan
+# What Was Removed Conceptually
 
-## Phase 1
+The project originally relied heavily on synthetic strategy generation.
 
-Infrastructure hardening.
+Earlier versions generated fake metrics from deterministic hash functions.
 
-Focus:
-- pair universe manager
-- protection engine
-- probationary deployment layer
-- typed mutation system
-- replayable artifacts
+That architecture is being phased out.
 
-## Phase 2
+The following areas are still legacy/synthetic:
 
-Survivor expansion.
+```text
+generation.py
+validation.py
+mutation_spaces.py
+quota_tuner.py
+```
 
-Focus:
-- ETH/SOL mean reversion
-- volatility compression families
-- adaptive MR thresholds
-- cross-symbol alpha expansion
+These systems are NOT currently trusted as real alpha research.
 
-## Phase 3
-
-Portfolio optimization.
-
-Focus:
-- covariance-aware allocation
-- dynamic exposure sizing
-- adaptive capital scaling
-- regime-dependent portfolio construction
-
-## Phase 4
-
-Production-grade execution.
-
-Focus:
-- deterministic execution
-- resilient exchange handling
-- execution analytics
-- event sourcing
-- live risk management
+The migration strategy is:
+replace synthetic evaluation with real data-driven research incrementally.
 
 ---
 
-# Long-Term Objective
+# Current Architectural Direction
 
-Build a self-improving adaptive portfolio research and deployment platform capable of:
+The current roadmap prioritizes:
 
-- discovering new alpha streams,
-- validating them robustly,
-- allocating capital dynamically,
-- adapting across market regimes,
-- and compounding sustainably with controlled drawdown.
+```text
+research correctness
+→ reproducibility
+→ risk realism
+→ adaptive governance
+→ live execution
+```
+
+NOT:
+
+```text
+blind strategy generation
+```
+
+---
+
+# Major Current Limitations
+
+Ver9 is still NOT production-grade.
+
+Missing or incomplete:
+
+- realistic order book simulation
+- spread dynamics
+- partial fills
+- funding rates
+- leverage/liquidation simulation
+- market impact modeling
+- correlation shock modeling
+- latency simulation
+- deterministic experiment seeds
+- feature store/versioning
+- benchmark governance
+- survivorship-bias controls
+- true out-of-sample orchestration
+- exchange reconciliation
+- production execution daemon hardening
+
+Current execution assumptions are still optimistic.
+
+---
+
+# Current Research Philosophy
+
+The objective is NOT to create an "AI trading bot" quickly.
+
+The objective is:
+
+```text
+build a disciplined adaptive research platform
+that can safely evolve toward autonomous portfolio management
+without uncontrolled overfitting.
+```
+
+That requires:
+
+- reproducibility
+- regime awareness
+- risk governance
+- realistic validation
+- strict leakage prevention
+- capital-aware portfolio simulation
+
+before:
+
+- reinforcement learning
+- genetic optimization
+- autonomous mutation systems
+- self-improving agents
+
+---
+
+# Current Repo Structure
+
+```text
+ver9/
+├── research/
+│   ├── backtesting/
+│   ├── data/
+│   ├── experiments/
+│   ├── regime/
+│   ├── strategies/
+│   ├── validation/
+│   └── examples/
+│
+├── daemon/
+├── execution/
+├── lifecycle/
+├── portfolio/
+└── registry/
+```
+
+---
+
+# Immediate Next Priorities
+
+Highest-priority upcoming work:
+
+1. Feature infrastructure
+2. Leakage-resistant feature pipelines
+3. Feature lineage/versioning
+4. Better execution realism
+5. Portfolio covariance/risk modeling
+6. Robust out-of-sample governance
+7. Live paper-trading integration
+8. Exchange reconciliation layer
+9. Adaptive portfolio weighting
+10. Safer evolutionary research replacement
+
+---
+
+# Status Summary
+
+Ver9 is now:
+
+```text
+a legitimate early-stage quantitative research platform
+```
+
+It is no longer:
+
+```text
+pure infrastructure theater around synthetic metrics
+```
+
+But it is also NOT yet:
+
+```text
+a deployable institutional trading system
+```
+
+The project is currently in the transition phase between those two states.
